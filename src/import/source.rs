@@ -56,7 +56,7 @@ pub struct DocumentMeta {
 	pub version: i32,
 	#[serde(rename = "itemType")] pub item_type: String,
 	pub title: String,
-	#[serde(rename = "abstractNote")] pub abstract_note: String,
+	#[serde(rename = "abstractNote", default)] pub abstract_note: String,
 	pub date: String,
 	pub language: String,
 	pub url: String,
@@ -141,7 +141,7 @@ pub fn import_source<P: AsRef<Path>>(path: P) -> Result<DocumentMeta, ImportSour
 	let item = &import.items[0];
 
 	let Some(Value::String(kind)) = item.get("itemType") else { return Err(ImportSourceError::InvalidItemFormat) };
-	if kind != "document" { return Err(ImportSourceError::WrongItemCount); }
+	// if kind != "document" { return Err(ImportSourceError::WrongItemCount); }
 
 	Ok(serde_path_to_error::deserialize(item)?)
 }
