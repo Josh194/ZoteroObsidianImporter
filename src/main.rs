@@ -1,6 +1,7 @@
-use std::{collections::HashMap, env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}, str::FromStr, vec};
+use std::{env, fmt::Display, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}, process::{ExitCode, Termination}, str::FromStr, vec};
 
 use config::ANNOTATIONS_PREFIX;
+use console::{style, user_attended_stderr};
 use document::{annotation::ZAnnotation, doc::Document};
 use format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use import::{annotations::import_annotations, source::{import_source, DocumentMeta, ImportSourceError}};
@@ -67,6 +68,7 @@ impl NoteTarget {
 #[derive(Debug, Clone, Copy)]
 enum ProgramError {
 	UserExit,
+	Unattended,
 	BadImportFormat,
 	PDFLoadError,
 	PDFParseError,
@@ -94,7 +96,69 @@ impl<T> BorrowableIterator for vec::IntoIter<T> {
 	}
 }
 
-fn main() -> Result<(), ProgramError> {
+/// * Currently unusable since this does not account for the formatting escape codes
+struct SurroundedString<T: Display> {
+	value: T
+}
+
+impl<T: Display> SurroundedString<T> {
+	pub fn new(value: T) -> Self {
+		Self { value }
+	}
+}
+
+fn surround<T: Display>(value: T) -> SurroundedString<T> {
+	SurroundedString::new(value)
+}
+
+impl<T: Display> Display for SurroundedString<T> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let content = self.value.to_string();
+		let surround = "=".repeat(content.len());
+
+		write!(f, "{}\n{}\n{}", surround, content, surround)
+	}
+}
+
+fn get_sur(n: usize) -> String {
+	"=".repeat(n)
+}
+
+struct ProgramResult {
+	result: Result<(), ProgramError>
+}
+
+impl Termination for ProgramResult {
+	fn report(self) -> ExitCode {
+		match self.result {
+			Ok(_) => {
+				let sur = get_sur(24);
+				println!("{sur}\n{}: Import complete\n{sur}", style("Success").bold().green());
+
+				ExitCode::SUCCESS
+			},
+			Err(error) => {
+				match error {
+					ProgramError::UserExit => (),
+					_ => println!("{}: {error:?}", style("Error").bold().red())
+				}
+
+				let sur = get_sur(22);
+				println!("{sur}\n{}: Import failed\n{sur}", style("Exiting").bold().red());
+
+				ExitCode::FAILURE
+			},
+		}
+	}
+}
+
+fn main() -> ProgramResult {
+	ProgramResult { result: run() }
+}
+
+fn run() -> Result<(), ProgramError> {
+	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
+
 	let config_str: String = fs::read_to_string("config.json").unwrap();
 	let config: ProgramConfig = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&config_str)).unwrap();
 
@@ -141,7 +205,7 @@ fn main() -> Result<(), ProgramError> {
 			println!("Error determining existing note structure!");
 
 			match e {
-				NoteFetchError::UnrecognizedSources => { println!("Exiting"); return Err(ProgramError::UserExit); },
+				NoteFetchError::UnrecognizedSources => { return Err(ProgramError::UserExit); },
 				NoteFetchError::Interact(error) => { println!("Console interaction error: {error}"); return Err(error.into()) },
 				NoteFetchError::Filesystem(error) => { println!("Filesystem IO error: {error}"); return Err(ProgramError::FilesystemError); }
 			}
@@ -156,6 +220,8 @@ fn main() -> Result<(), ProgramError> {
 	}
 
 	fn open_file<P: AsRef<Path>>(path: P) -> Result<fs::File, ProgramError> {
+		println!("Updating - {:?}", path.as_ref());
+
 		fs::File::options().read(true).write(true).open(path).map_err(|error| {
 			println!("Failed to open file!");
 			println!("Filesystem IO error: {error}"); ProgramError::FilesystemError
@@ -163,6 +229,8 @@ fn main() -> Result<(), ProgramError> {
 	}
 
 	fn create_file<P: AsRef<Path>>(path: P) -> Result<fs::File, ProgramError> {
+		println!("Creating - {:?}", path.as_ref());
+
 		fs::File::create_new(path).map_err(|error| {
 			println!("Failed to create file!");
 			println!("Filesystem IO error: {error}"); ProgramError::FilesystemError
@@ -170,11 +238,11 @@ fn main() -> Result<(), ProgramError> {
 	}
 
 	fn load_note(path: &PathBuf, exists: bool) -> Result<NoteTarget, ProgramError> {
-		println!("{path:?}");
 		Ok(NoteTarget { file: if exists { open_file(path)? } else { create_file(path)? }, exists, persists: Vec::new() })
 	}
 
-	println!("my path: {:?}", env::current_dir());
+	println!("[DEBUG] - Current directory: {:?}\n\nBeginning import:", env::current_dir().unwrap());
+
 	let mut source_target: NoteTarget = load_note(&files.source.path, files.source.exists)?;
 	let annotation_targets: Vec<(ZAnnotation, NoteTarget)> = files.annotations.map(|(z, file)| -> Result<_, ProgramError> {
 		Ok((z, load_note(&PathBuf::from(&workspace_path).join(ANNOTATIONS_PREFIX).join(file.path).with_extension("md"), file.exists)?))
@@ -214,8 +282,6 @@ fn main() -> Result<(), ProgramError> {
 	}
 
 	// ! file.sync_data()
-
-	println!("Complete");
 
 	Ok(())
 }

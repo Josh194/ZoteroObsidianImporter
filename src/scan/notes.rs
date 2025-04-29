@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fs, io, path::{Path, PathBuf}, vec};
 
+use console::style;
 use itertools::{Itertools, ZipEq};
 
 use crate::{config::{ANNOTATIONS_PREFIX, SOURCE_PREFIX}, util::directory::get_files_ext};
@@ -74,17 +75,7 @@ pub fn get_note_files<
 	residuals.extend(db);
 
 	if !residuals.is_empty() {
-		let proceed = dialoguer::Confirm::new()
-			.with_prompt(format!("\
-				Output notes directory contains unrecognized notes.\n\
-				Continuing will cause the following files to be permanently deleted, with any persistent notes being lost:\n{}\
-				Do you still want to proceed?\n\
-			", residuals.iter().map(|s| { format!(" - {}\n", s.to_string_lossy()) }).collect::<String>()))
-			.default(false)
-			.report(false) // Not supported in some terminals.
-			.interact()?;
-
-		if !proceed { return Err(NoteFetchError::UnrecognizedSources) }
+		if !query_delete_files(residuals.iter())? { return Err(NoteFetchError::UnrecognizedSources) }
 	}
 
 	Ok(SourceFiles {
@@ -92,4 +83,18 @@ pub fn get_note_files<
 		annotations: annotations.zip_eq(out.into_iter()),
 		residuals
 	})
+}
+
+fn query_delete_files<I: Iterator<Item: AsRef<Path>>>(files: I) -> Result<bool, dialoguer::Error> {
+	dialoguer::Confirm::new()
+		.with_prompt(format!(
+			"{}: {}\n{}:\n{}\n{}\n",
+			style("Warning").bold().yellow(),
+			style("Output notes directory contains unrecognized notes").bold(),
+			"Continuing will cause the following files to be permanently deleted, with any persistent notes being lost",
+			files.map(|s| { format!(" - {}\n", style(s.as_ref().to_string_lossy()).cyan()) }).collect::<String>(),
+			style("Do you still want to proceed?").bold().magenta(),
+		)).default(false)
+		.report(false) // Not supported in some terminals.
+		.interact()
 }
