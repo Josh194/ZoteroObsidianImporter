@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         BUILD_TARGET: [dev]
+        OUT_DIR: [debug]
 
     steps:
     - uses: actions/checkout@v4
@@ -39,4 +40,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ZOImporter
-        path: target/${{ matrix.BUILD_TARGET }}/ZOImporter
+        path: target/${{ matrix.OUT_DIR }}/ZOImporter
