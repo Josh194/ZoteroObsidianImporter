@@ -1,0 +1,15 @@
+{
+	"manifest_version": 2,
+	"name": "ZOImporter",
+	"version": "1.0",
+	"description": "Helper plugin for ZOImporter",
+	"homepage_url": "https://github.com/Josh194/ZoteroObsidianImporter",
+	"applications": {
+		"zotero": {
+			"id": "zo-importer@example.com",
+			"update_url": "https://zotero-download.s3.amazonaws.com/tmp/make-it-red/updates-2.0.json",
+			"strict_min_version": "7.0",
+			"strict_max_version": "7.1.*"
+		}
+	}
+}

@@ -167,8 +167,6 @@ impl TryFrom<Dictionary> for Annotation {
 	type Error = DocParseError;
 
 	fn try_from(value: Dictionary) -> Result<Self, Self::Error> {
-		// println!("{value:?}");
-
 		check_type_valid(&value)?;
 
 		Ok(Annotation {

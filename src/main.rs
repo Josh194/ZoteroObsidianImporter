@@ -1,10 +1,12 @@
 use std::{env, fmt::Display, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}, process::{ExitCode, Termination}, str::FromStr, vec};
 
+use clap::Parser as _;
 use config::ANNOTATIONS_PREFIX;
 use console::{style, user_attended_stderr};
 use document::{annotation::ZAnnotation, doc::Document};
 use format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use import::{annotations::import_annotations, source::{import_source, DocumentMeta, ImportSourceError}};
+use itertools::Itertools;
 use scan::{notes::{get_note_files, BorrowableIterator, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
 use serde::Deserialize;
 
@@ -152,11 +154,20 @@ impl Termination for ProgramResult {
 	}
 }
 
+#[derive(clap::Parser, Debug)]
+#[command(version)]
+struct Args {
+	#[arg(long)]
+	debug: bool
+}
+
 fn main() -> ProgramResult {
 	ProgramResult { result: run() }
 }
 
 fn run() -> Result<(), ProgramError> {
+	let Args { debug } = Args::parse();
+
 	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
 	let config_str: String = fs::read_to_string("config.json").unwrap();
@@ -185,9 +196,21 @@ fn run() -> Result<(), ProgramError> {
 	// * Load exported PDF.
 	// TODO: Could be multiple attachments.
 	let annotation_document: Document = match lopdf::Document::load(PathBuf::from(&import_path).join(&source.attachments[0].path)) {
-		Ok(pdf) => match pdf.try_into() {
-			Ok(val) => val,
-			Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
+		Ok(pdf) => {
+			if debug {
+				println!("{:?}", pdf.extract_text(&pdf.get_pages().keys().copied().collect_vec()).unwrap().replace("\n", ""));
+
+				for page in pdf.page_iter() {
+					//println!("{:?}", pdf.get_page_annotations(page));
+				}
+				
+				return Ok(());
+			}
+
+			match pdf.try_into() {
+				Ok(val) => val,
+				Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
+			}
 		},
 		Err(error) => { println!("Error loading import PDF: {error}"); return Err(ProgramError::PDFLoadError); }
 	};

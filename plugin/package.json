@@ -1,0 +1,28 @@
+{
+	"name": "zo-import-plugin",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"build:dev": "webpack --config webpack.config.ts --mode=development && ts-node ./pack.ts",
+		"build:release": "webpack --config webpack.config.ts --mode=production && ts-node ./pack.ts"
+	},
+	"author": "Joshua Nave",
+	"license": "ISC",
+	"description": "",
+	"devDependencies": {
+		"typescript": "^5.8.2",
+
+		"@types/node": "^22.13.9",
+		"ts-node": "^10.9.2",
+		"ts-loader": "^9.5.2",
+
+		"@types/webpack": "^5.28.5",
+		"webpack": "^5.99.7",
+		"webpack-cli": "^6.0.1",
+
+		"@types/archiver": "^6.0.3",
+		"archiver": "^7.0.1",
+
+		"zotero-types": "^4.0.0-beta.10"
+	}
+}
