@@ -1,10 +1,12 @@
 import { Util } from "../util";
 
 export class ZIndex {
-	libraries: LibraryIndex[];
+	version: number;
+	index: { libraries: LibraryIndex[] };
 
-	constructor(libraries: LibraryIndex[]) {
-		this.libraries = libraries;
+	constructor(version: number, libraries: LibraryIndex[]) {
+		this.version = version;
+		this.index = { libraries };
 	}
 }
 
@@ -17,12 +19,14 @@ class IndexBase {
 }
 
 export class LibraryIndex extends IndexBase {
+	name: string;
 	documents: DocumentIndex[];
 	collections: CollectionIndex[];
 
-	constructor(id: number, documents: DocumentIndex[], collections: CollectionIndex[]) {
+	constructor(id: number, name: string, documents: DocumentIndex[], collections: CollectionIndex[]) {
 		super(id);
 
+		this.name = name;
 		this.documents = documents;
 		this.collections = collections;
 	}
@@ -35,6 +39,7 @@ export class LibraryIndex extends IndexBase {
 
 		return new LibraryIndex(
 			library.id,
+			library.name,
 			documents,
 			Zotero.Collections.getByLibrary(library.id).map(CollectionIndex.from)
 		);
@@ -92,7 +97,7 @@ export class AuthorIndex {
 		let name: string | { first: string, last: string };
 
 		if (creator.name === undefined) {
-			format = "first_last";
+			format = "full";
 			if (creator.firstName === undefined || creator.lastName === undefined ) { throw new TypeError("Invalid creator JSON!"); }
 			name = { first: creator.firstName, last: creator.lastName } ;
 		} else {

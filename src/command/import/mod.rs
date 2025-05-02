@@ -4,8 +4,12 @@ use crate::{config::ANNOTATIONS_PREFIX, ProgramConfig, ProgramError};
 use crate::document::{annotation::ZAnnotation, doc::Document};
 use crate::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use crate::import::{annotations::import_annotations, source::{import_source, DocumentMeta, ImportSourceError}};
-use itertools::Itertools;
 use crate::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
+
+#[derive(clap::Args, Debug)]
+pub struct ImportArgs {
+
+}
 
 #[derive(Debug)]
 enum ParsePersistsError {
@@ -54,8 +58,8 @@ impl NoteTarget {
 	}
 }
 
-pub fn import(config: &ProgramConfig, debug: bool) -> Result<(), ProgramError> {
-	let ProgramConfig { import_path, workspace_path } = config;
+pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result<(), ProgramError> {
+	let ProgramConfig { data_path: _, import_path, workspace_path } = config;
 
 	// * Load exported source metadata.
 	let source: DocumentMeta = match import_source(import_path) {
@@ -73,26 +77,14 @@ pub fn import(config: &ProgramConfig, debug: bool) -> Result<(), ProgramError> {
 	};
 
 	// TODO: Need to improve this.
-	let workspace_path: String = PathBuf::from_str(workspace_path).unwrap().join(&source.citation_key).to_str().unwrap().to_owned();
+	let workspace_path: String = workspace_path.join(&source.citation_key).to_str().unwrap().to_owned();
 
 	// * Load exported PDF.
 	// TODO: Could be multiple attachments.
 	let annotation_document: Document = match lopdf::Document::load(PathBuf::from(import_path).join(&source.attachments[0].path)) {
-		Ok(pdf) => {
-			if debug {
-				println!("{:?}", pdf.extract_text(&pdf.get_pages().keys().copied().collect_vec()).unwrap().replace("\n", ""));
-
-				for page in pdf.page_iter() {
-					//println!("{:?}", pdf.get_page_annotations(page));
-				}
-				
-				return Ok(());
-			}
-
-			match pdf.try_into() {
-				Ok(val) => val,
-				Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
-			}
+		Ok(pdf) => match pdf.try_into() {
+			Ok(val) => val,
+			Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
 		},
 		Err(error) => { println!("Error loading import PDF: {error}"); return Err(ProgramError::PDFLoadError); }
 	};

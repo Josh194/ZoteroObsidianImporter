@@ -1,6 +1,10 @@
-use std::{fs::{self}, process::{ExitCode, Termination}};
+#![deny(unsafe_op_in_unsafe_fn)]
+
+use std::{fs::{self}, path::PathBuf, process::{ExitCode, Termination}};
 
 use clap::Parser as _;
+use command::{import::ImportArgs, select::SelectArgs};
+use config::CONFIG_VERSION;
 use console::{style, user_attended_stderr};
 use serde::Deserialize;
 
@@ -35,9 +39,18 @@ impl From<dialoguer::Error> for ProgramError {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ConfigFile {
+	version: i64,
+	config: serde_json::Value
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ProgramConfig {
-	import_path: String,
-	workspace_path: String
+	data_path: PathBuf,
+	import_path: PathBuf,
+	workspace_path: PathBuf
 }
 
 fn get_sur(n: usize) -> String {
@@ -73,10 +86,19 @@ impl Termination for ProgramResult {
 }
 
 #[derive(clap::Parser, Debug)]
-#[command(version)]
-struct Args {
-	#[arg(long)]
-	debug: bool
+#[command(version, propagate_version = true)]
+struct Cli {
+	#[arg(long)] // Don't conflict with version.
+	verbose: bool,
+
+	#[command(subcommand)]
+	command: Command
+}
+
+#[derive(clap::Subcommand, Debug)]
+enum Command {
+	Select(SelectArgs),
+	Import(ImportArgs)
 }
 
 fn main() -> ProgramResult {
@@ -84,14 +106,29 @@ fn main() -> ProgramResult {
 }
 
 fn run() -> Result<(), ProgramError> {
-	let Args { debug } = Args::parse();
+	let Cli { verbose, command } = Cli::parse();
 
 	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
 	let config_str: String = fs::read_to_string("config.json").unwrap();
-	let config: ProgramConfig = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&config_str)).unwrap();
+	
+	let config_file: ConfigFile = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&config_str)).unwrap();
+	if config_file.version != CONFIG_VERSION { eprint!("Unsupported config version"); todo!() }
+
+	let config: ProgramConfig = serde_path_to_error::deserialize(config_file.config).unwrap();
+
+	match command {
+		Command::Select(select_args) => {
+			if let Err(e) = command::select::select(&config, verbose, select_args) {
+				eprintln!("\n{e}"); return Err(e.into());
+			}
+		},
+		Command::Import(import_args) => {
+			command::import::import(&config, verbose, import_args)?;
+		},
+	}
 
 	// ! file.sync_data()
 
-	command::import::import(&config, debug)
+	Ok(())
 }

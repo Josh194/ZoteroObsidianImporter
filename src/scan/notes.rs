@@ -91,6 +91,6 @@ fn query_delete_files<I: Iterator<Item: AsRef<Path>>>(files: I) -> Result<bool, 
 			files.map(|s| { format!(" - {}\n", style(s.as_ref().to_string_lossy()).cyan()) }).collect::<String>(),
 			style("Do you still want to proceed?").bold().magenta(),
 		)).default(false)
-		.report(false) // Not supported in some terminals.
+		.report(false) // dialoguer bug causes this to sometimes cause duplication.
 		.interact()
 }

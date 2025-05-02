@@ -1,3 +1,6 @@
+pub const CONFIG_VERSION: i64 = 1;
+pub const API_VERSION: i64 = 1;
+
 pub const SOURCE_PREFIX: &str = "";
 pub const ANNOTATIONS_PREFIX: &str = "annotations";
 

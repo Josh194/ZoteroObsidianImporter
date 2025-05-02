@@ -7,7 +7,7 @@ edition = "2024"
 # CLI
 clap = { version = "4.5.37", features = ["derive"] }
 console = "0.15.11"
-dialoguer = "0.11.0"
+dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 
 # PDF Processing
 lopdf = { version = "0.36.0" }
