@@ -1,3 +1,6 @@
+import { perform_export } from "./export";
+import { Util } from "./util";
+
 export class Core {
 	id: null;
 	version: null;
@@ -12,29 +15,6 @@ export class Core {
 	}
 	
 	async main() {
-		// Global properties are included automatically in Zotero 7
-		var host = new URL('https://foo.com/path').host;
-		Zotero.log(`Host is ${host}`);
-		await this.test();
-	}
-
-	private async test() {
-		let path = Zotero.File.pathToFile(Zotero.DataDirectory.dir);
-		path.appendRelativePath("test.txt");
-	
-		if (Zotero.isWin) {
-			let exe = Zotero.File.pathToFile(Zotero.DataDirectory.dir);
-			exe.appendRelativePath("zo_import_run.bat");
-	
-			await Zotero.Utilities.Internal.exec(exe, [Zotero.File.pathToFile(Zotero.DataDirectory.dir).path])
-		} else {
-			throw new Error("Unsupported OS")
-		}
-	
-		Zotero.log("Continuing");
-	
-		//new FileReader().readAsText(path);
-		await Zotero.File.putContentsAsync(path, "hi");
 		// let a = await Zotero.File.getContentsAsync(path);
 	
 		// switch (true) {
@@ -59,7 +39,6 @@ export class Core {
 	
 		const item = Zotero.Items.get(3);
 		//Zotero.getZoteroPanes()[0]?.exportPDF(0);
-		Zotero.log("hello");
 		Zotero.log(item.annotationText);
 	}
 
@@ -132,6 +111,23 @@ export class Core {
 	}
 }
 
-function clickHandler(): void {
+async function clickHandler(): Promise<void> {
 	Zotero.log("clicked");
+
+	try {
+		let result = await perform_export()
+
+		if (result !== true) {
+			Zotero.log("Export failed");
+			Zotero.logError(result);
+		}
+	} catch (e) {
+		if (e instanceof Util.ImporterNotFoundError) {
+			Zotero.log("Importer not found");
+		} else if (e instanceof Util.UnsupportedOSError) {
+			Zotero.log("Unsupported OS");
+		} else {
+			throw e;
+		}
+	}
 }

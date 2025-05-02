@@ -3,7 +3,7 @@ import path from 'path';
 
 const config: webpack.Configuration = {
 	entry: {
-		bootstrap: ['./src/main.ts']
+		bootstrap: ['./src/entry.ts']
 	},
 	plugins: [],
 	module: {
