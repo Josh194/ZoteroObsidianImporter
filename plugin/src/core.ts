@@ -36,10 +36,8 @@ export class Core {
 		// 		break;
 		// 	}
 		// }
-	
-		const item = Zotero.Items.get(3);
+		
 		//Zotero.getZoteroPanes()[0]?.exportPDF(0);
-		Zotero.log(item.annotationText);
 	}
 
 	addToWindow(window: _ZoteroTypes.MainWindow) {

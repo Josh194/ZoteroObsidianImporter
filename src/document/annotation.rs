@@ -8,28 +8,28 @@ use super::doc::{AnnotationItem, BadFormatCause, DocParseError, DocumentItem, In
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
-	x: f32,
-	y: f32
+	pub x: f32,
+	pub y: f32
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Rectangle {
-	start: Point,
-	end: Point
+	pub start: Point,
+	pub end: Point
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Colour {
-	r: u8,
-	g: u8,
-	b: u8
+	pub r: u8,
+	pub g: u8,
+	pub b: u8
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Date {
-	year: i32,
-	month: i8,
-	day: i8
+	pub year: i32,
+	pub month: i8,
+	pub day: i8
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -156,8 +156,19 @@ fn get_title(annotation: &Dictionary) -> Result<Option<String>, DocParseError> {
 	Ok(Some(text::parse_string(title).or(Err(DocParseError::BadStringFormat))?))
 }
 
+// ! TODO: Return proper errors and actually follow the pdf spec propertly.
 fn get_colour(annotation: &Dictionary) -> Result<Option<Colour>, DocParseError> {
-	Ok(None)
+	let lopdf::Object::Array(arr) = annotation.get("C".as_bytes()).unwrap_or(&lopdf::Object::Null) else { return Ok(None); };
+	let arr: &[lopdf::Object; 3] = arr.as_slice().try_into().unwrap();
+
+	let colour: Colour = Colour {
+		r: (arr[0].as_float().unwrap() * 255.0) as u8,
+		g: (arr[1].as_float().unwrap() * 255.0) as u8,
+		b: (arr[2].as_float().unwrap() * 255.0) as u8
+	};
+
+	println!("{colour:?}");
+	Ok(Some(colour))
 }
 
 fn get_date(annotation: &Dictionary) -> Result<Option<Date>, DocParseError> {

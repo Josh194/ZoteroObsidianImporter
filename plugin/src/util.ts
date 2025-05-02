@@ -1,4 +1,4 @@
-import { index_name } from "./export";
+import { export_name, index_name } from "./export";
 
 export namespace Util {
 	export async function get_data_dir(): Promise<nsIFile> {
@@ -41,8 +41,18 @@ export namespace Util {
 
 	export class ImporterNotFoundError extends Error {}
 
-	export async function exec_importer(): Promise<true | Error> {
-		const file_name: string = "zo_import_run";
+	type ExecStage = "select" | "import";
+
+	export async function exec_importer(stage: ExecStage): Promise<true | Error> {
+		function get_stage_file(stage: ExecStage): string {
+			switch (stage) {
+				case "select": return "zo_select_run";
+				case "import": return "zo_import_run";
+			}
+		}
+
+		const file_name: string = get_stage_file(stage);
+
 		const dir: nsIFile = await get_data_dir();
 
 		let file: nsIFile;
@@ -59,7 +69,14 @@ export namespace Util {
 
 		if (!file.exists() || !file.isExecutable()) { throw new ImporterNotFoundError("Importer not found"); }
 
-		return await Zotero.Utilities.Internal.exec(file, [dir.path, index_name])
+		function get_args(stage: ExecStage): string[] {
+			switch (stage) {
+				case "select": return [index_name];
+				case "import": return [export_name];
+			}
+		}
+
+		return await Zotero.Utilities.Internal.exec(file, [dir.path, ])
 	}
 
 	export function require_defined<T>(val: T | undefined): T {

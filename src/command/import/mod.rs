@@ -1,14 +1,19 @@
-use std::{env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}, str::FromStr};
+use std::{collections::{BTreeMap, HashMap}, env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}, str::FromStr};
 
-use crate::{config::ANNOTATIONS_PREFIX, ProgramConfig, ProgramError};
+use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, ProgramConfig, ProgramError};
 use crate::document::{annotation::ZAnnotation, doc::Document};
 use crate::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use crate::import::{annotations::import_annotations, source::{import_source, DocumentMeta, ImportSourceError}};
 use crate::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
 
+mod export;
+pub use export::{Export as AImport, Annotations as ImportedAnnotList, ZAnnotationNew as ImportedAnnot};
+use itertools::Itertools;
+
 #[derive(clap::Args, Debug)]
 pub struct ImportArgs {
-
+	#[arg(short, long)]
+	file: PathBuf,
 }
 
 #[derive(Debug)]
@@ -61,6 +66,13 @@ impl NoteTarget {
 pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result<(), ProgramError> {
 	let ProgramConfig { data_path: _, import_path, workspace_path } = config;
 
+	let export_data: String = fs::read_to_string(args.file).unwrap();
+
+	let export_file: export::Export = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&export_data)).unwrap();
+	if export_file.version != API_VERSION { eprint!("Unsupported index version"); todo!() }
+
+	let export: export::Annotations = serde_path_to_error::deserialize(export_file.export).unwrap();
+
 	// * Load exported source metadata.
 	let source: DocumentMeta = match import_source(import_path) {
 		Ok(val) => val,
@@ -81,19 +93,21 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 
 	// * Load exported PDF.
 	// TODO: Could be multiple attachments.
-	let annotation_document: Document = match lopdf::Document::load(PathBuf::from(import_path).join(&source.attachments[0].path)) {
-		Ok(pdf) => match pdf.try_into() {
-			Ok(val) => val,
-			Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
-		},
-		Err(error) => { println!("Error loading import PDF: {error}"); return Err(ProgramError::PDFLoadError); }
-	};
+	// let annotation_document: Document = match lopdf::Document::load(PathBuf::from(import_path).join(&source.attachments[0].path)) {
+	// 	Ok(pdf) => match pdf.try_into() {
+	// 		Ok(val) => val,
+	// 		Err(error) => { println!("Error parsing import PDF: {error:?}"); return Err(ProgramError::PDFParseError); }
+	// 	},
+	// 	Err(error) => { println!("Error loading import PDF: {error}"); return Err(ProgramError::PDFLoadError); }
+	// };
+	let annotation_document: Document = Document { annotations: export.annotations.iter().map(|a| a.make_annot()).collect() };
 
-	// * Parse annotations from PDF.
-	let annotations = match import_annotations(&annotation_document) {
-		Ok(val) => val,
-		Err(error) => { println!("Error importing annotations: {error:?}"); return Err(ProgramError::AnnotationParseError); }
-	};
+	// // * Parse annotations from PDF.
+	// let annotations = match import_annotations(&annotation_document) {
+	// 	Ok(val) => val,
+	// 	Err(error) => { println!("Error importing annotations: {error:?}"); return Err(ProgramError::AnnotationParseError); }
+	// };
+	let annotations: Vec<ZAnnotation> = export.annotations.iter().zip_eq(&annotation_document.annotations).map(|(src, a)| src.make_z_annot(a)).collect();
 
 	// * Determine current output directory contents, relative to the target output.
 	let files = match get_note_files(&workspace_path, &source.file_name(), annotations.into_iter(), |a| { format!("{} {}", source.short_name(), a.key) }) {
@@ -160,13 +174,23 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 			SourceExportError::PropertyDeserialize(error) => { println!("Note property formatting error: {error}"); return Err(ProgramError::YAMLDeserializeError); },
 		}
 	}
+
+	let mut annot_key_map: HashMap<&str, &ImportedAnnot> = HashMap::new();
+
+	for annot in &export.annotations {
+		if annot_key_map.insert(&annot.key, annot).is_some() {
+			panic!("Duplicate annotation keys!");
+		}
+	}
 	
 	for (annotation, mut target) in annotation_targets {
 		let persist = if target.exists { target.parse_persists().unwrap(); target.file.set_len(0).unwrap(); target.file.rewind().unwrap(); Some(target.persists[0].as_str()) } else { None };
 		
+		println!("{}", annotation.key);
+
 		if let Err(e) = write_annotation(AnnotationTarget {
 			file: &mut target.file,
-			data: AnnotationImportData { source: &source, annot: annotation },
+			data: AnnotationImportData { source: &source, export: annot_key_map.get(annotation.key.as_str()).copied(), annot: annotation },
 			persist: persist.map(|s| AnnnotationPersist { content_section: s.to_owned() })
 		}) {
 			println!("Error exporting annotation note!");
