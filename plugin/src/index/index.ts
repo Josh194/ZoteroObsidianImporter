@@ -29,7 +29,7 @@ export class LibraryIndex extends IndexBase {
 
 	static async from(library: Zotero.Library): Promise<LibraryIndex> {
 		let documents: DocumentIndex[] = (await Zotero.Items.getAll(library.id, true))
-			.filter((i) => i.itemType === "document")
+			.filter((i) => i.itemType === "document") // ! TODO: This is wrong! Need to support other types, like "journalArticle", etc.
 			.map(DocumentIndex.try_from)
 			.map(Util.require_defined);
 

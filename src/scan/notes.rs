@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs, io, path::{Path, PathBuf}, vec};
 use console::style;
 use itertools::{Itertools, ZipEq};
 
-use crate::{config::{ANNOTATIONS_PREFIX, SOURCE_PREFIX}, util::directory::get_files_ext};
+use crate::{config::{ANNOTATIONS_PREFIX, SOURCE_PREFIX}, util::{directory::get_files_ext, iter::BorrowableIterator}};
 
 #[derive(Debug, Clone)]
 pub struct AnnotationFile {
@@ -38,10 +38,6 @@ impl From<dialoguer::Error> for NoteFetchError {
 }
 
 type AnnotOutIter = vec::IntoIter<AnnotationFile>;
-
-pub trait BorrowableIterator: Iterator {
-	fn borrowed(&self) -> impl Iterator<Item = &Self::Item>;
-}
 
 pub fn get_note_files<
 	'a,

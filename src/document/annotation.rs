@@ -42,6 +42,7 @@ pub enum AnnotationType {
 	Unknown
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct Annotation {
 	/// The type of the annotation.
