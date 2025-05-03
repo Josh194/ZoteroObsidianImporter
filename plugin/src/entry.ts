@@ -1,6 +1,6 @@
 import { Core } from './core'
 
-let core: Core | undefined;
+let core: Core | null;
 
 export function install() {
 	Zotero.log("Installed ZO 2.0");
@@ -31,7 +31,7 @@ export function onMainWindowUnload({ window }: {window: any}) {
 export function shutdown() {
 	Zotero.log("Shutting down 2.0");
 	core?.removeFromAllWindows();
-	core = undefined;
+	core = null;
 }
 
 export function uninstall() {

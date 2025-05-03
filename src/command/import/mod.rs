@@ -1,6 +1,8 @@
 use std::{env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}};
 
-use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, document::annotation::Annotation, ProgramConfig, ProgramError};
+use console::style;
+
+use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, document::annotation::Annotation, get_sur, ProgramConfig, ProgramError};
 use crate::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use crate::import::source::{import_source, DocumentMeta, ImportSourceError};
 use crate::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
@@ -61,7 +63,7 @@ impl NoteTarget {
 }
 
 pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result<(), ProgramError> {
-	let ProgramConfig { data_path: _, import_path, workspace_path } = config;
+	let ProgramConfig { import_path, workspace_path, .. } = config;
 
 	let export_data: String = fs::read_to_string(args.file).unwrap();
 
@@ -174,6 +176,8 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 			}
 		}
 	}
+
+	println!("\n{}: Import complete", style("Finished").bold().green());
 
 	Ok(())
 }

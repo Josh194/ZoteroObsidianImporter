@@ -1,5 +1,6 @@
 import { Util } from "../../util";
 import { Annotation } from "./annotations";
+// import type { Source } from "./source";
 
 export class ExportFile {
 	version: number;
@@ -12,6 +13,7 @@ export class ExportFile {
 }
 
 export class ZExport {
+	// source: Source;
 	annotations: Annotation[];
 
 	constructor(annotations: Annotation[]) {

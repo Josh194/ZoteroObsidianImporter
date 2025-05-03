@@ -8,6 +8,15 @@ use crate::config::IMPORT_META_NAME;
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
+pub struct ImportMeta {
+	config: Value,
+	version: ImportVersionMeta,
+	collections: Value, // TODO: Figure out what this format is.
+	items: Vec<serde_json::Map<String, Value>>
+}
+
+#[allow(unused)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ImportVersionMeta {
 	zotero: String,
 	bbt: String
@@ -15,11 +24,28 @@ pub struct ImportVersionMeta {
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
-pub struct ImportMeta {
-	config: Value,
-	version: ImportVersionMeta,
-	collections: Value, // TODO: Figure out what this format is.
-	items: Vec<serde_json::Map<String, Value>>
+pub struct DocumentMeta {
+	pub version: i32,
+	#[serde(rename = "itemType")] pub item_type: String,
+	pub title: String,
+	#[serde(rename = "abstractNote", default)] pub abstract_note: String,
+	pub date: String,
+	pub language: String,
+	pub url: String,
+	#[serde(rename = "accessDate")] pub access_date: String,
+	pub creators: Vec<Creator>,
+	pub tags: Vec<Tag>,
+	pub relations: Value, // TODO: Figure out what this format is.
+	#[serde(rename = "dateAdded")] pub date_added: String,
+	#[serde(rename = "dateModified")] pub date_modified: String,
+	pub uri: String,
+	pub attachments: Vec<Attachment>,
+	pub notes: Vec<Value>, // TODO: Figure out what this format is.
+	#[serde(rename = "citationKey")] pub citation_key: String,
+	#[serde(rename = "itemID")] pub item_id: i32,
+	#[serde(rename = "itemKey")] pub item_key: String,
+	#[serde(rename = "libraryID")] pub library_id: i32,
+	pub select: String
 }
 
 #[allow(unused)]
@@ -47,32 +73,6 @@ pub struct Attachment {
 	#[serde(rename = "dateModified")] pub date_modified: String,
 	pub uri: String,
 	pub path: String,
-	pub select: String
-}
-
-#[allow(unused)]
-#[derive(Debug, Clone, Deserialize)]
-pub struct DocumentMeta {
-	pub version: i32,
-	#[serde(rename = "itemType")] pub item_type: String,
-	pub title: String,
-	#[serde(rename = "abstractNote", default)] pub abstract_note: String,
-	pub date: String,
-	pub language: String,
-	pub url: String,
-	#[serde(rename = "accessDate")] pub access_date: String,
-	pub creators: Vec<Creator>,
-	pub tags: Vec<Tag>,
-	pub relations: Value, // TODO: Figure out what this format is.
-	#[serde(rename = "dateAdded")] pub date_added: String,
-	#[serde(rename = "dateModified")] pub date_modified: String,
-	pub uri: String,
-	pub attachments: Vec<Attachment>,
-	pub notes: Vec<Value>, // TODO: Figure out what this format is.
-	#[serde(rename = "citationKey")] pub citation_key: String,
-	#[serde(rename = "itemID")] pub item_id: i32,
-	#[serde(rename = "itemKey")] pub item_key: String,
-	#[serde(rename = "libraryID")] pub library_id: i32,
 	pub select: String
 }
 

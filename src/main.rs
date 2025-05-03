@@ -1,6 +1,6 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
-use std::{fs::{self}, path::PathBuf, process::{ExitCode, Termination}};
+use std::{env, fs::{self}, path::PathBuf, process::{ExitCode, Termination}};
 
 use clap::Parser as _;
 use command::{import::ImportArgs, select::SelectArgs};
@@ -16,6 +16,9 @@ mod util;
 mod scan;
 mod format;
 mod command;
+mod global;
+mod log;
+mod panic;
 
 // ! TODO: Sanitize data everywhere.
 
@@ -46,6 +49,8 @@ struct ConfigFile {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ProgramConfig {
+	#[serde(default)]
+	log_coloring: bool,
 	data_path: PathBuf,
 	import_path: PathBuf,
 	workspace_path: PathBuf
@@ -63,9 +68,6 @@ impl Termination for ProgramResult {
 	fn report(self) -> ExitCode {
 		match self.result {
 			Ok(_) => {
-				let sur = get_sur(24);
-				println!("{sur}\n{}: Import complete\n{sur}", style("Success").bold().green());
-
 				ExitCode::SUCCESS
 			},
 			Err(error) => {
@@ -74,8 +76,7 @@ impl Termination for ProgramResult {
 					_ => println!("{}: {error:?}", style("Error").bold().red())
 				}
 
-				let sur = get_sur(22);
-				println!("{sur}\n{}: Import failed\n{sur}", style("Exiting").bold().red());
+				println!("\n{}: Import failed", style("Error").bold().red());
 
 				ExitCode::FAILURE
 			},
@@ -104,7 +105,9 @@ fn main() -> ProgramResult {
 }
 
 fn run() -> Result<(), ProgramError> {
-	let Cli { verbose, command } = Cli::parse();
+	unsafe { env::set_var("RUST_BACKTRACE", "1") };
+
+	let cli = Cli::parse();
 
 	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
@@ -114,6 +117,16 @@ fn run() -> Result<(), ProgramError> {
 	if config_file.version != CONFIG_VERSION { eprint!("Unsupported config version"); todo!() }
 
 	let config: ProgramConfig = serde_path_to_error::deserialize(config_file.config).unwrap();
+
+	if let Err(e) = fs::create_dir_all(&config.data_path) {
+		panic!("Cannot access data directory!");
+	}
+
+	if let Err(e) = global::init(&config, &cli) {
+		
+	}
+	
+	let Cli { verbose, command } = cli;
 
 	match command {
 		Command::Select(select_args) => {

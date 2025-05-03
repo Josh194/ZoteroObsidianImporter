@@ -45,6 +45,8 @@ export class Core {
 		let menu = doc.createXULElement("button");
 		menu.setAttribute("id", "zo_export_begin");
 		menu.setAttribute("type", "button");
+		menu.setAttribute("label", "Run ZOImporter");
+
 		menu.addEventListener("click", clickHandler);
 	
 		function isLabel(obj: object): obj is XUL.ILabel {
@@ -78,7 +80,7 @@ export class Core {
 			Zotero.log("Is Not Checkbox");
 		}
 	
-		doc.getElementById('menu_viewPopup')?.appendChild(menu);
+		doc.getElementById('menu_FilePopup')?.appendChild(menu);
 		this.children.push(menu.id);
 	}
 
