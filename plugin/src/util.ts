@@ -79,8 +79,8 @@ export namespace Util {
 		return await Zotero.Utilities.Internal.exec(file, [dir.path, ])
 	}
 
-	export function require_defined<T>(val: T | undefined): T {
-		if (val === undefined) {
+	export function require_defined<T>(val: T | null): T {
+		if (val === null) {
 			throw new TypeError("Value was undefined!");
 		}
 

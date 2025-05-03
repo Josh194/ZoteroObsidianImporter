@@ -9,7 +9,7 @@ use console::{style, user_attended_stderr};
 use serde::Deserialize;
 
 mod document;
-mod text;
+// mod text;
 mod import;
 mod config;
 mod util;
@@ -24,8 +24,6 @@ enum ProgramError {
 	UserExit,
 	Unattended,
 	BadImportFormat,
-	PDFLoadError,
-	PDFParseError,
 	AnnotationParseError,
 	FilesystemError,
 	InteractError,

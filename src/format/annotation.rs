@@ -1,16 +1,15 @@
-use std::{fmt::Display, fs::File, io::{self, Write}};
+use std::{fs::File, io::{self, Write}};
 
 use serde::Serialize;
 
-use crate::{command::import::ImportedAnnot, document::annotation::{self, ZAnnotation}, import::source::DocumentMeta};
+use crate::{document::annotation::{Annotation, Colour}, import::source::DocumentMeta};
 
 use super::NoteTarget;
 
 #[derive(Debug, Clone)]
 pub struct AnnotationImportData<'a> {
 	pub source: &'a DocumentMeta,
-	pub export: Option<&'a ImportedAnnot>,
-	pub annot: ZAnnotation<'a>
+	pub annot: Annotation
 }
 
 #[derive(Debug, Clone)]
@@ -78,22 +77,22 @@ impl From<serde_yml::Error> for AnnotationExportError {
 
 pub fn write_annotation(target: AnnotationTarget) -> Result<(), AnnotationExportError> {
 	let AnnotationTarget { file, data, persist } = target;
-	let AnnotationImportData { source, export, annot } = data;
+	let AnnotationImportData { source, annot } = data;
 
 	let props = AnnotationProperties {
 		source: format!("[[{}]]", source.file_name()),
-		tags: annot.tags.iter().map(|s| { s.replace(" ", "_") }).collect()
+		tags: annot.tags.iter().map(|s| { s.name.replace(" ", "_") }).collect()
 	};
 
 	let AnnnotationPersist { content_section: persist_sec } = persist.unwrap_or_default();
 
-	let mut buffer = annot.base.content.as_ref().cloned().unwrap_or_default();
+	let mut buffer = annot.comment.as_ref().cloned().unwrap_or_default();
 	buffer = fixup_headers(buffer);
 
 	AnnotationNote {
 		properties: &serde_yml::to_string(&props)?,
-		text: export.map(|a| a.text.as_str()).unwrap_or("N/A"),
-		colour: annot.base.colour.map(|c| c.into()),
+		text: annot.text.as_ref().map(|s| s.as_str()).unwrap_or("N/A"),
+		colour: annot.colour,
 		persist: &persist_sec,
 		content: &buffer
 	}.write_to(file)?;
@@ -101,30 +100,10 @@ pub fn write_annotation(target: AnnotationTarget) -> Result<(), AnnotationExport
 	Ok(())
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Colour {
-	r: u8,
-	g: u8,
-	b: u8
-}
-
-impl From<annotation::Colour> for Colour {
-	fn from(value: annotation::Colour) -> Self {
-		Self { r: value.r, g: value.g, b: value.b }
-	}
-}
-
-impl Display for Colour {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let Self { r, g, b } = self;
-		write!(f, "#{r:02x}{g:02x}{b:02x}")
-	}
-}
-
 struct AnnotationNote<'a> {
 	properties: &'a str,
 	text: &'a str,
-	colour: Option<Colour>,
+	colour: Colour,
 	persist: &'a str,
 	content: &'a str
 }
@@ -139,13 +118,7 @@ impl<'a> AnnotationNote<'a> {
 			content
 		} = self;
 
-		// TODO: Improve this.
 		// * Markdown does not affect the styled text in Obsidian, so we use HTML for the italics as well.
-		let text: String = match colour {
-			Some(c) => format!("<mark style=\"background-color: {c};\"><i>{text}</i></mark>"),
-			None => format!("<i>{text}</i>"),
-		};
-
-		out.write_all(format!("---\n{properties}---\n\n\"{text}\"\n\n**Persistent Notes**\n\n---\n\n<!--SZO-Persist-Begin-->{persist}%%SZO-Persist-End%%\n\n---\n\n{content}").as_bytes())
+		out.write_all(format!("---\n{properties}---\n\n\"<mark style=\"background-color: {colour};\"><i>{text}</i></mark>\"\n\n**Persistent Notes**\n\n---\n\n<!--SZO-Persist-Begin-->{persist}%%SZO-Persist-End%%\n\n---\n\n{content}").as_bytes())
 	}
 }

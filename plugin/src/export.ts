@@ -1,5 +1,6 @@
-import { LibraryIndex, ZIndex } from "./index";
-import type { ZO } from "./selection/selection";
+import { ExportFile, ZExport } from "./api/export/export";
+import { LibraryIndex, ZIndex } from "./api/index";
+import type { ZO } from "./api/selection";
 import { Util } from "./util";
 
 export const index_name: string = "index.json";
@@ -45,18 +46,42 @@ export async function perform_export(): Promise<true | Error> {
 	// 	throw new Error("Library not found");
 	// }
 
+	let document = Zotero.Items.get(selection.document_id);
+
+	const allowed_types: _ZoteroTypes.Item.ItemType[] = [
+		"document",
+		"blogPost",
+		"book",
+		"bookSection",
+		"journalArticle",
+		"magazineArticle",
+		"manuscript",
+		"newspaperArticle",
+		"preprint",
+		"presentation",
+		"report",
+		"thesis",
+		"webpage"
+	];
+
+	if (!allowed_types.includes(document.itemType)) { throw new Error("Bad doc type"); }
+
 	// !
-	let attachment = Zotero.Items.get(selection.document_id).getAttachments()[0] as number;
-	let annotations = Zotero.Items.get(attachment).getAnnotations();
+	let attachment = document.getAttachments()[0] as number;
+	let z_export = ZExport.try_from(Zotero.Items.get(attachment));
+
+	if (z_export === null) { return new Error("Failed to parse attachment"); }
 
 	let export_file = PathUtils.join((await Util.get_data_dir()).path, export_name);
 
-	await Zotero.File.putContentsAsync(export_file, JSON.stringify({
-		version: 1,
-		export: {
-			annotations
-		}
-	}));
+	await Zotero.File.putContentsAsync(export_file, JSON.stringify(
+		new ExportFile(
+			1,
+			z_export
+		),
+		null,
+		"\t"
+	));
 
 	return await Util.exec_importer("import");
 }

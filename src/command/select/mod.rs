@@ -122,26 +122,21 @@ pub fn select(config: &ProgramConfig, verbose: bool, args: SelectArgs) -> Result
 			None => return Err(SelectError::UserExit),
 		};
 
-	// let mut output_path: PathBuf = config.data_path.clone();
+	// println!("Importing as nested");
+	// output_path.push(TryInto::<PathBuf>::try_into(cache.get_collection(collection_id).unwrap().get_path())?);
+	// output_path.set_file_name(args.out);
 
 	if !document.collection_ids.is_empty() {
-		let Ok(collection_id) = document.collection_ids.as_ref().try_into().map(|arr: [i64; 1]| arr[0]) else {
+		if document.collection_ids.len() > 1 {
 			return Err(SelectError::AmbiguousCollections(
 				document.collection_ids.iter().map(|id| {
 					cache.get_collection(*id).unwrap().get_path().to_string()
 				}).collect()
 			));
 		};
-
-		// println!("Importing as nested");
-		// output_path.push(TryInto::<PathBuf>::try_into(cache.get_collection(collection_id).unwrap().get_path())?);
 	}
-	
-	// output_path.set_file_name(args.out);
 
-	if verbose {
-		println!("Writing output file to {}", args.out.to_string_lossy());
-	}
+	if verbose { println!("Writing output file to {}", args.out.to_string_lossy()); }
 
 	fs::write(&args.out, serde_json::to_string(&SelectionOutput {
 		version: API_VERSION,

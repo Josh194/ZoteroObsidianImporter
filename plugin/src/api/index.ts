@@ -70,7 +70,7 @@ export class DocumentIndex extends IndexBase {
 		this.date_modified = date_modified;
 	}
 
-	static try_from(item: Zotero.Item): DocumentIndex | undefined {
+	static try_from(item: Zotero.Item): DocumentIndex | null {
 		return new DocumentIndex(
 			item.id,
 			item.getDisplayTitle(),
