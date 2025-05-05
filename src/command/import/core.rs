@@ -2,7 +2,7 @@ use std::{env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}};
 
 use console::style;
 
-use crate::api::import::{self, annotation::Annotation};
+use crate::{api::import::{self, annotation::Annotation}, util::versioned};
 use crate::{global::{ANNOTATIONS_PREFIX, API_VERSION}, ProgramConfig, ProgramError};
 use super::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, target::NTarget};
 use super::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
@@ -61,14 +61,26 @@ impl NoteTarget {
 }
 
 pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result<(), ProgramError> {
-	let ProgramConfig { import_path, workspace_path, .. } = config;
+	let ProgramConfig { workspace_path, .. } = config;
 
-	let export_data: String = fs::read_to_string(args.file).unwrap();
+	let export_file: String = fs::read_to_string(args.file).unwrap();
 
-	let export_file: import::ExportFile = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&export_data)).unwrap();
-	if export_file.version != API_VERSION { eprint!("Unsupported index version"); todo!() }
+	let export: import::Export = versioned::deserialize_json_str_track(API_VERSION, &export_file).map_err(|e| {
+		match e {
+			versioned::Error::InvalidVersion(version) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Unsupported API version").bold());
+				eprintln!("{}: An import query was made using version '{version}', but only '{API_VERSION}' is supported", style("Info").bold());
 
-	let export: import::Export = serde_path_to_error::deserialize(export_file.export).map_err(|e| { eprintln!("{e}"); todo!() }).unwrap();
+				ProgramError::UnsupportedAPIVersion
+			},
+			versioned::Error::Inner(e) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Invalid API query").bold());
+				eprintln!("{}: {e}", style("Info").bold());
+
+				ProgramError::InvalidAPIQuery
+			},
+		}
+	})?;
 
 	// * Load export file.
 	// TODO: Could be multiple attachments.

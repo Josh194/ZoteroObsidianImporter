@@ -3,3 +3,4 @@ pub mod iter;
 pub mod string;
 pub mod path;
 pub mod text;
+pub mod versioned;

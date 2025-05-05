@@ -2,7 +2,7 @@ use std::{fmt::{self, Display}, fs, path::PathBuf};
 
 use console::style;
 use dialoguer::theme::Theme;
-use crate::{api::select::index::{self, Library}, core::{CollectionFilePathError, LibraryCache, LibraryIndexFormatError}};
+use crate::{api::select::index::{self, Library}, core::{CollectionFilePathError, LibraryCache, LibraryIndexFormatError}, util::versioned};
 use crate::api::select::selection::{Selection, SelectionOutput};
 
 use crate::{global::API_VERSION, ProgramConfig, ProgramError};
@@ -33,6 +33,7 @@ impl Theme for ThemeFix {
 
 pub enum SelectError {
 	UserExit,
+	BadIndex,
 	AmbiguousCollections(Box<[String]>),
 	DuplicateCollectionIds,
 	DangerousCollectionName
@@ -42,6 +43,7 @@ impl From<SelectError> for ProgramError {
 	fn from(value: SelectError) -> Self {
 		match value {
 			SelectError::UserExit => ProgramError::UserExit,
+			SelectError::BadIndex => todo!(),
 			SelectError::AmbiguousCollections(items) => todo!(),
 			SelectError::DuplicateCollectionIds => todo!(),
 			SelectError::DangerousCollectionName => todo!()
@@ -69,6 +71,7 @@ impl Display for SelectError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			SelectError::UserExit => Ok(()),
+			SelectError::BadIndex => todo!(),
 			SelectError::AmbiguousCollections(items) => {
 				write!(
 					f,
@@ -87,12 +90,22 @@ impl Display for SelectError {
 }
 
 pub fn select(config: &ProgramConfig, verbose: bool, args: SelectArgs) -> Result<(), SelectError> {
-	let index_data: String = fs::read_to_string(args.file).unwrap();
+	let index_file: String = fs::read_to_string(args.file).unwrap();
 
-	let index_file: index::Index = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&index_data)).unwrap();
-	if index_file.version != API_VERSION { eprint!("Unsupported index version"); todo!() }
-
-	let index: index::User = serde_path_to_error::deserialize(index_file.index).unwrap();
+	let index: index::User = versioned::deserialize_json_str_track(API_VERSION, &index_file).map_err(|e| {
+		match e {
+			versioned::Error::InvalidVersion(version) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Unsupported API version").bold());
+				eprintln!("{}: A select query was made using version '{version}', but only '{API_VERSION}' is supported", style("Info").bold());
+			},
+			versioned::Error::Inner(e) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Invalid API query").bold());
+				eprintln!("{}: {e}", style("Info").bold());
+			},
+		}
+		
+		SelectError::BadIndex
+	})?;
 
 	// * Select a library automatically if only one exists, or prompt the user to choose otherwise.
 	let library = match TryInto::<&[Library; 1]>::try_into(index.libraries.as_ref()) {

@@ -2,11 +2,11 @@ import { Util } from "../util";
 
 export class ZIndex {
 	version: number;
-	index: { libraries: LibraryIndex[] };
+	data: { libraries: LibraryIndex[] };
 
 	constructor(version: number, libraries: LibraryIndex[]) {
 		this.version = version;
-		this.index = { libraries };
+		this.data = { libraries };
 	}
 }
 

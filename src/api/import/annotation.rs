@@ -57,13 +57,13 @@ impl<'de> Deserialize<'de> for Colour {
 struct ColourVisitor;
 
 impl<'de> Visitor<'de> for ColourVisitor {
-    type Value = Colour;
+	type Value = Colour;
 
 	fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "a color string represented as a hexadecimal RGB value with a leading #")
 	}
 
-    fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+	fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
 		let chars: Box<[char]> = v.chars().collect();
 		let arr: [char; 7] = chars.as_ref().try_into().map_err(|_| E::invalid_length(chars.len(), &"5"))?;
 
@@ -72,5 +72,5 @@ impl<'de> Visitor<'de> for ColourVisitor {
 		let [_, r, g, b] = u32::from_str_radix(&v[1..], 16).map_err(|e| E::custom(e))?.to_be_bytes();
 
 		Ok(Colour { r, g, b })
-    }
+	}
 }

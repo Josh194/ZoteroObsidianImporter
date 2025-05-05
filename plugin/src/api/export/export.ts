@@ -4,11 +4,11 @@ import { Source } from "./source";
 
 export class ExportFile {
 	version: number;
-	export: ZExport;
+	data: ZExport;
 
 	constructor(version: number, z_export: ZExport) {
 		this.version = version;
-		this.export = z_export;
+		this.data = z_export;
 	}
 }
 

@@ -5,9 +5,10 @@ use std::{env, fs::{self}, path::PathBuf, process::{ExitCode, Termination}};
 use clap::Parser as _;
 use command::{import::ImportArgs, select::SelectArgs};
 use global::CONFIG_VERSION;
-use console::{style, user_attended_stderr};
+use console::style;
 use global::init;
 use serde::Deserialize;
+use util::versioned;
 
 /// Global state, initialization, and context.
 mod global;
@@ -34,8 +35,9 @@ enum ProgramError {
 	Unattended,
 	InaccessibleConfig,
 	InvalidConfig,
-	UnsupportedConfig,
-	UnsupportedAPI,
+	InvalidAPIQuery,
+	UnsupportedConfigVersion,
+	UnsupportedAPIVersion,
 	BadImportFormat,
 	AnnotationParseError,
 	FilesystemError,
@@ -62,7 +64,6 @@ struct ProgramConfig {
 	#[serde(default)]
 	log_coloring: bool,
 	data_path: PathBuf,
-	import_path: PathBuf,
 	workspace_path: PathBuf
 }
 
@@ -111,7 +112,7 @@ fn main() -> ProgramResult {
 fn run() -> Result<(), ProgramError> {
 	unsafe { env::set_var("RUST_BACKTRACE", "1") };
 
-	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
+	if !console::user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
 	// * Parse cli arguments.
 	let cli = Cli::parse();
@@ -126,30 +127,29 @@ fn run() -> Result<(), ProgramError> {
 	
 	// * Load the config file.
 
-	let config_str: String = fs::read_to_string("config.json").map_err(|e| {
+	let config_file: String = fs::read_to_string("config.json").map_err(|e| {
 		eprintln!("{}: {}", style("Error").bold().red(), style("Failed to read config file").bold());
 		eprintln!("{}: {e}", style("Reason").bold());
 
 		ProgramError::InaccessibleConfig
 	})?;
-	
-	let process_config_error = |e: serde_path_to_error::Error<serde_json::Error>| {
-		eprintln!("{}: {}", style("Error").bold().red(), style("Invalid config file format").bold());
-		eprintln!("{}: {e}", style("Info").bold());
 
-		ProgramError::InvalidConfig
-	};
+	let config: ProgramConfig = versioned::deserialize_json_str_track(CONFIG_VERSION, &config_file).map_err(|e| {
+		match e {
+			versioned::Error::InvalidVersion(version) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Unsupported config version").bold());
+				eprintln!("{}: The provided config uses version '{version}', but only '{CONFIG_VERSION}' is supported", style("Info").bold());
 
-	let config_file: ConfigFile = serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(&config_str)).map_err(process_config_error)?;
+				ProgramError::UnsupportedConfigVersion
+			},
+			versioned::Error::Inner(e) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Invalid config file format").bold());
+				eprintln!("{}: {e}", style("Info").bold());
 
-	if config_file.version != CONFIG_VERSION {
-		eprintln!("{}: {}", style("Error").bold().red(), style("Unsupported config version").bold());
-		eprintln!("{}: The provided config uses version '{}', but only '{}' is supported", style("Info").bold(), config_file.version, CONFIG_VERSION);
-
-		return Err(ProgramError::UnsupportedConfig);
-	}
-
-	let config: ProgramConfig = serde_path_to_error::deserialize(config_file.config).map_err(process_config_error)?;
+				ProgramError::InvalidConfig
+			},
+		}
+	})?;
 
 	if let Err(e) = fs::create_dir_all(&config.data_path) {
 		eprintln!("{}: {}", style("Error").bold().red(), style("Unable to access data directory").bold());
