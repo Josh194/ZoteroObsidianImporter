@@ -1,8 +1,5 @@
 use std::fs::File;
 
-pub mod source;
-pub mod annotation;
-
 #[derive(Debug)]
 pub struct NoteTarget<'a, Data, Persist> {
 	/// The file to write the data to.

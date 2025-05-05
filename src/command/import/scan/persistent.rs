@@ -1,6 +1,6 @@
 use itertools::{EitherOrBoth, Itertools};
 
-use crate::config::{PERSISTENT_BEGIN, PERSISTENT_END};
+use crate::global::{PERSISTENT_BEGIN, PERSISTENT_END};
 
 #[derive(Debug)]
 pub enum FetchPersistentError {

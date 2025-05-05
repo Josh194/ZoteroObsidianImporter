@@ -1,8 +1,6 @@
 use serde::Deserialize;
 
-use crate::api::Author;
-
-pub mod util;
+use crate::api::shared::Author;
 
 // * Currently can't (or at least don't want to) use `#[serde(flatten)]` to handle the plugin's `IndexBase` inheritance due to issues around `#[serde(deny_unknown_fields)]`.
 // * Look at this again in the future if the issue is ever solved.

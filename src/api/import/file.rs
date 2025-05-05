@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{document::annotation::Annotation, import::source::SourceImport};
+use super::{annotation::Annotation, source::SourceImport};
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]

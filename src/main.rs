@@ -4,22 +4,27 @@ use std::{env, fs::{self}, path::PathBuf, process::{ExitCode, Termination}};
 
 use clap::Parser as _;
 use command::{import::ImportArgs, select::SelectArgs};
-use config::CONFIG_VERSION;
+use global::CONFIG_VERSION;
 use console::{style, user_attended_stderr};
+use global::init;
 use serde::Deserialize;
 
-mod document;
-// mod text;
-mod import;
-mod config;
-mod util;
-mod scan;
-mod format;
-mod command;
+/// Global state, initialization, and context.
 mod global;
-mod log;
+/// Panic handling and logging.
 mod panic;
+/// Logging framework.
+mod log;
+/// General utilities.
+mod util;
+/// Core structures and operations for working with queries.
+mod core;
+/// API structures and serialization-related routines.
 mod api;
+/// Command-specific routines.
+mod command;
+/// Cross-query structures and operations.
+mod db;
 
 // ! TODO: Sanitize data everywhere.
 
@@ -68,9 +73,7 @@ struct ProgramResult {
 impl Termination for ProgramResult {
 	fn report(self) -> ExitCode {
 		match self.result {
-			Ok(_) => {
-				ExitCode::SUCCESS
-			},
+			Ok(_) => ExitCode::SUCCESS,
 			Err(error) => {
 				eprint!("\n{}: Import failed", style("Error").bold().red());
 
@@ -110,13 +113,18 @@ fn run() -> Result<(), ProgramError> {
 
 	if !user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
+	// * Parse cli arguments.
 	let cli = Cli::parse();
 
-	if let Err(e) = global::preinit() {
+	// * Perform preinitialization and set the panic hook with default values.
+
+	if let Err(e) = init::preinit() {
 
 	}
 
-	global::register_hook(&cli, false);
+	init::register_hook(&cli, false);
+	
+	// * Load the config file.
 
 	let config_str: String = fs::read_to_string("config.json").map_err(|e| {
 		eprintln!("{}: {}", style("Error").bold().red(), style("Failed to read config file").bold());
@@ -150,11 +158,14 @@ fn run() -> Result<(), ProgramError> {
 		return Err(ProgramError::FilesystemError);
 	}
 
-	if let Err(e) = global::init(&config, &cli) {
+	// * Complete initialization with the now available config.
+	if let Err(e) = init::postinit(&config, &cli) {
 		
 	}
 	
 	let Cli { verbose, command } = cli;
+
+	// * Execute the selected command.
 
 	match command {
 		Command::Select(select_args) => {

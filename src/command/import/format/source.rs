@@ -2,9 +2,9 @@ use std::{fs::File, io::{self, Write}};
 
 use serde::Serialize;
 
-use crate::import::source::SourceImport;
+use crate::api::import::source::SourceImport;
 
-use super::NoteTarget;
+use super::target::NoteTarget;
 
 #[derive(Debug, Clone)]
 pub struct SourceImportData<'a> {

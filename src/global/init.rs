@@ -1,11 +1,8 @@
-use std::{env, fs::File, panic, sync::{OnceLock, RwLock}};
+use std::{env, fs::File, panic};
 
 use console::style;
 
-use crate::{config::LOG_NAME, panic::{panic_hook, PanicWrapper}, Cli, ProgramConfig};
-
-// TODO: Use a safer lock when possible.
-pub static LOG_FILE: RwLock<OnceLock<File>> = RwLock::new(OnceLock::new());
+use crate::{global, panic::{panic_hook, PanicWrapper}, Cli, ProgramConfig};
 
 pub struct InitStatus {
 
@@ -24,8 +21,8 @@ pub fn preinit() -> Result<(), PreInitStatus> {
 	let mut success: bool = true;
 
 	let log = env::current_exe().map(|path| {
-		File::create(path.with_file_name(LOG_NAME)).map(|file| {
-			let target = LOG_FILE.write().unwrap_or_else(|e| {
+		File::create(path.with_file_name(global::LOG_NAME)).map(|file| {
+			let target = global::LOG_FILE.write().unwrap_or_else(|e| {
 				e.into_inner() // ! Is this dangerous?
 			});
 	
@@ -49,7 +46,7 @@ pub fn preinit() -> Result<(), PreInitStatus> {
 	Ok(())
 }
 
-pub fn init(config: &ProgramConfig, args: &Cli) -> Result<(), InitStatus> {
+pub fn postinit(config: &ProgramConfig, args: &Cli) -> Result<(), InitStatus> {
 	let mut success: bool = true;
 
 	register_hook(args, config.log_coloring);

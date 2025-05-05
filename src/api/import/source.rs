@@ -3,7 +3,7 @@ use std::io;
 use chrono::format::StrftimeItems;
 use serde::Deserialize;
 
-use crate::api::Author;
+use crate::api::shared::{Author, Name};
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
@@ -59,8 +59,8 @@ impl SourceImport {
 
 	pub fn short_name(&self) -> String {
 		match &self.primary_author().name {
-			crate::api::Name::Full(full) => format!("{} {}", full.last, self.year()),
-			crate::api::Name::Combined(combined) => format!("{} {}", combined, self.year()),
+			Name::Full(full) => format!("{} {}", full.last, self.year()),
+			Name::Combined(combined) => format!("{} {}", combined, self.year()),
 		}
 	}
 

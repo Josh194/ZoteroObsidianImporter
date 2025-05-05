@@ -3,8 +3,7 @@ use std::{collections::BTreeMap, fmt::Display, path::{Path, PathBuf}};
 use itertools::Itertools;
 
 use crate::util::path::is_path_segment;
-
-use super::{Collection, Library};
+use crate::api::select::index::{Collection, Library};
 
 #[derive(Debug, Clone)]
 pub struct LibraryCache<'a> {

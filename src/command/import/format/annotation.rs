@@ -2,9 +2,9 @@ use std::{fs::File, io::{self, Write}};
 
 use serde::Serialize;
 
-use crate::{document::annotation::{Annotation, Colour}, import::source::SourceImport};
+use crate::{api::import::annotation::{Annotation, Colour}, api::import::source::SourceImport};
 
-use super::NoteTarget;
+use super::target::NoteTarget;
 
 #[derive(Debug, Clone)]
 pub struct AnnotationImportData<'a> {

@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs, io, path::{Path, PathBuf}, vec};
 use console::style;
 use itertools::{Itertools, ZipEq};
 
-use crate::{config::{ANNOTATIONS_PREFIX, SOURCE_PREFIX}, util::{directory::get_files_ext, iter::BorrowableIterator}};
+use crate::{global::{ANNOTATIONS_PREFIX, SOURCE_PREFIX}, util::{directory::get_files_ext, iter::BorrowableIterator}};
 
 #[derive(Debug, Clone)]
 pub struct AnnotationFile {
