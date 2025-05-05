@@ -1,7 +1,7 @@
 {
 	"manifest_version": 2,
 	"name": "ZOImporter",
-	"version": "1.0",
+	"version": "0.1",
 	"description": "Helper plugin for ZOImporter",
 	"homepage_url": "https://github.com/Josh194/ZoteroObsidianImporter",
 	"applications": {

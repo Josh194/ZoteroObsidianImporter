@@ -18,6 +18,7 @@
 		"noUncheckedIndexedAccess": true,
 		// module settings
 		"noUncheckedSideEffectImports": true,
+		"resolveJsonModule": true,
 		// generation settings
 		"removeComments": false,
 		"preserveConstEnums": true,
@@ -29,6 +30,7 @@
 		"types": ["zotero-types/entries/sandbox"] // Must exist to prevent dev dependencies from being pulled in.
 	},
 	"include": [
-		"./**/*"
+		"./**/*",
+		"./manifest.json"
 	]
 }

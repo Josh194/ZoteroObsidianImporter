@@ -1,106 +1,52 @@
 import { perform_export } from "./export";
 import { Util } from "./util";
+import manifest from './manifest.json';
 
 export class Core {
 	id: null;
 	version: null;
 	rootURI: null;
-	children: string[]
+	// children: string[]
 	
 	constructor(id: null, version: null, rootURI: null ) {
 		this.id = id;
 		this.version = version;
 		this.rootURI = rootURI;
-		this.children = [];
-	}
-	
-	async main() {
-		// let a = await Zotero.File.getContentsAsync(path);
-	
-		// switch (true) {
-		// 	case typeof(a) === "string": {
-		// 		Zotero.log(a);
-		// 		break;
-		// 	}
-		// 	case typeof a !== 'object': {
-		// 		Zotero.log("void");
-		// 		break;
-		// 	}
-		// 	case a instanceof Uint8Array: {
-		// 		Zotero.log(a);
-		// 		break;
-		// 	}
-		// 	case !(a instanceof Uint8Array): {
-		// 		let b = a;
-		// 		Zotero.log(a);
-		// 		break;
-		// 	}
-		// }
-		
-		//Zotero.getZoteroPanes()[0]?.exportPDF(0);
+		// this.children = [];
 	}
 
-	addToWindow(window: _ZoteroTypes.MainWindow) {
-		let doc = window.document;
-		let menu = doc.createXULElement("button");
-		menu.setAttribute("id", "zo_export_begin");
-		menu.setAttribute("type", "button");
-		menu.setAttribute("label", "Run ZOImporter");
+	addImportMenu() {
+		// * This is automatically removed based on plugin id as per https://www.zotero.org/support/dev/zotero_7_for_developers#custom_reader_event_handlers.
+		Zotero.Reader.registerEventListener(
+			"createViewContextMenu",
+			(event) => {
+				let { reader, params, append } = event;
 
-		menu.addEventListener("click", clickHandler);
-	
-		function isLabel(obj: object): obj is XUL.ILabel {
-			if (!("label" in obj)) { return false; }
-			return  typeof(obj.label) === "string";
-		}
-	
-		function isDisabled(obj: object): obj is XUL.IDisabled {
-			if (!("disabled" in obj)) { return false; }
-			return  typeof(obj.disabled) === "boolean";
-		}
-	
-		function isCheckboxElement(obj: XULElement): obj is XULCheckboxElement {
-			if (!isLabel(obj) || !isDisabled(obj)) { return false; }
-			if (!("checked" in obj)) { return false; }
-			return typeof(obj.checked) === "boolean";
-		}
-	
-		function assumeXUL(obj: any): obj is XULElement {
-			return true;
-		}
+				append({
+					label: "Run ZOImporter",
 
-		function assumeButtonElement(obj: XULElement): obj is XULButtonElement {
-			return true;
-		}
-	
-		if (!assumeXUL(menu)) { throw Error("?") }
-		if (isCheckboxElement(menu)) {
-			Zotero.log("Is Checkbox");
-		} else {
-			Zotero.log("Is Not Checkbox");
-		}
-	
-		// Zotero.ItemPaneManager.registerSection
-		doc.getElementById('menu_FilePopup')?.appendChild(menu);
-	
-		this.children.push(menu.id);
+					async onCommand() {
+						await clickHandler();
+					},
+				});
+			},
+			manifest.applications.zotero.id
+		);
 	}
+
+	addToWindow(window: _ZoteroTypes.MainWindow) {}
 
 	addToAllWindows() {
 		var windows = Zotero.getMainWindows();
+		
 		for (let win of windows) {
 			if (!win.ZoteroPane) continue;
+			
 			this.addToWindow(win);
 		}
 	}
 	
-	removeFromWindow(window: _ZoteroTypes.MainWindow) {
-		var doc = window.document;
-	
-		for (let id of this.children) {
-			doc.getElementById(id)?.remove();
-		}
-	}
+	removeFromWindow(window: _ZoteroTypes.MainWindow) {}
 
 	removeFromAllWindows() {
 		var windows = Zotero.getMainWindows();
