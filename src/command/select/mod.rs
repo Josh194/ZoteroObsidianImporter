@@ -5,7 +5,7 @@ use dialoguer::theme::Theme;
 use index::{util::{CollectionFilePathError, LibraryCache, LibraryIndexFormatError}, Library};
 use output::{Selection, SelectionOutput};
 
-use crate::{config::API_VERSION, get_sur, ProgramConfig, ProgramError};
+use crate::{config::API_VERSION, ProgramConfig, ProgramError};
 
 mod index;
 mod output;

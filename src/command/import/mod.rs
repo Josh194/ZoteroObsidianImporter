@@ -2,7 +2,7 @@ use std::{env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}};
 
 use console::style;
 
-use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, document::annotation::Annotation, get_sur, ProgramConfig, ProgramError};
+use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, document::annotation::Annotation, ProgramConfig, ProgramError};
 use crate::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
 use crate::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
 

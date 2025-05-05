@@ -47,7 +47,7 @@ impl<'a, 'b> Display for PanicWrapper<'a, 'b> {
 
 		let Self { info, colour_logs: _, verbose: _ } = *self;
 
-		writeln!(f, "{}: {}", style("Error").bold().red(), style(format!("Thread '{}' panicked!", thread.name().map(|s| s.to_owned()).unwrap_or_else(|| format!("{:?}", thread.id())))).bold())?;
+		writeln!(f, "{}: {}", style("Error").bold().red(), style(format!("Thread '{}' panicked", thread.name().map(|s| s.to_owned()).unwrap_or_else(|| format!("{:?}", thread.id())))).bold())?;
 
 		if let Some(loc) = info.location() {
 			writeln!(f, "{}: Location was {}", style("Info").bold(), style(format!("{}#{}:{}", loc.file(), loc.line(), loc.column())).cyan())?;

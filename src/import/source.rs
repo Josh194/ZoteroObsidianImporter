@@ -3,7 +3,7 @@ use std::io;
 use chrono::format::StrftimeItems;
 use serde::Deserialize;
 
-use crate::{api::Author, config::API_VERSION};
+use crate::api::Author;
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
