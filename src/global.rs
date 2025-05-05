@@ -20,7 +20,7 @@ pub fn init(config: &ProgramConfig, args: &Cli) -> Result<(), InitStatus> {
 		});
 
 		let _ = target.set(file);
-	}).inspect(|_| {
+	}).inspect_err(|_| {
 		success = false;
 
 		println!("{}: {}\nError messages will be printed to the console regardless of verbosity options", style("Warning").bold().yellow(), style("Unable to create log file").bold());

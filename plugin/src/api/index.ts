@@ -48,7 +48,7 @@ export class LibraryIndex extends IndexBase {
 
 export class DocumentIndex extends IndexBase {
 	title: string;
-	creators: AuthorIndex[];
+	authors: AuthorIndex[];
 	collection_ids: number[];
 	date_added: string;
 	date_modified: string;
@@ -64,7 +64,7 @@ export class DocumentIndex extends IndexBase {
 		super(id);
 
 		this.title = title;
-		this.creators = authors;
+		this.authors = authors;
 		this.collection_ids = collection_ids;
 		this.date_added = date_added;
 		this.date_modified = date_modified;

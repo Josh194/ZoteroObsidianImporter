@@ -4,7 +4,6 @@ use console::style;
 
 use crate::{config::{ANNOTATIONS_PREFIX, API_VERSION}, document::annotation::Annotation, get_sur, ProgramConfig, ProgramError};
 use crate::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, NTarget};
-use crate::import::source::{import_source, DocumentMeta, ImportSourceError};
 use crate::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
 
 mod export;
@@ -72,27 +71,12 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 
 	let export: export::Export = serde_path_to_error::deserialize(export_file.export).map_err(|e| { eprintln!("{e}"); todo!() }).unwrap();
 
-	// * Load exported source metadata.
-	let source: DocumentMeta = match import_source(import_path) {
-		Ok(val) => val,
-		Err(e) => {
-			println!("Error loading import metadata!");
-
-			match e {
-				ImportSourceError::Filesystem(error) => { println!("Filesystem IO error: {error}"); return Err(ProgramError::FilesystemError); },
-				ImportSourceError::InvalidJson(error) => { println!("Invalid format: {error}"); return Err(ProgramError::BadImportFormat); },
-				ImportSourceError::WrongItemCount => { println!("Unsupported number of items"); return Err(ProgramError::BadImportFormat); },
-				ImportSourceError::InvalidItemFormat => { println!("Invalid item format"); return Err(ProgramError::BadImportFormat); }
-			}
-		},
-	};
+	// * Load export file.
+	// TODO: Could be multiple attachments.
+	let export::Export { source, annotations } = export;
 
 	// TODO: Need to improve this.
 	let workspace_path: String = workspace_path.join(&source.citation_key).to_str().unwrap().to_owned();
-
-	// * Load export file.
-	// TODO: Could be multiple attachments.
-	let export::Export { annotations } = export;
 
 	// * Determine current output directory contents, relative to the target output.
 	let files = match get_note_files(&workspace_path, &source.file_name(), annotations.into_iter(), |a| { format!("{} {}", source.short_name(), a.key) }) {

@@ -80,7 +80,9 @@ export class Core {
 			Zotero.log("Is Not Checkbox");
 		}
 	
+		// Zotero.ItemPaneManager.registerSection
 		doc.getElementById('menu_FilePopup')?.appendChild(menu);
+	
 		this.children.push(menu.id);
 	}
 

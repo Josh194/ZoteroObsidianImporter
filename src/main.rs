@@ -19,6 +19,7 @@ mod command;
 mod global;
 mod log;
 mod panic;
+mod api;
 
 // ! TODO: Sanitize data everywhere.
 

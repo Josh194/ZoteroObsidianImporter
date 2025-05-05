@@ -2,13 +2,13 @@ use std::{fs::File, io::{self, Write}};
 
 use serde::Serialize;
 
-use crate::{document::annotation::{Annotation, Colour}, import::source::DocumentMeta};
+use crate::{document::annotation::{Annotation, Colour}, import::source::SourceImport};
 
 use super::NoteTarget;
 
 #[derive(Debug, Clone)]
 pub struct AnnotationImportData<'a> {
-	pub source: &'a DocumentMeta,
+	pub source: &'a SourceImport,
 	pub annot: Annotation
 }
 

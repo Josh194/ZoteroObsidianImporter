@@ -2,13 +2,13 @@ use std::{fs::File, io::{self, Write}};
 
 use serde::Serialize;
 
-use crate::import::source::DocumentMeta;
+use crate::import::source::SourceImport;
 
 use super::NoteTarget;
 
 #[derive(Debug, Clone)]
 pub struct SourceImportData<'a> {
-	pub source: &'a DocumentMeta
+	pub source: &'a SourceImport
 }
 
 #[derive(Debug, Clone)]
@@ -56,7 +56,7 @@ pub fn write_source(target: SourceTarget) -> Result<(), SourceExportError> {
 	let SourceImportData { source } = data;
 
 	let props = SourceProperties {
-		authors: source.creators.iter().filter(|c| c.creator_type == "author").map(|c| { format!("{} {}", c.first_name, c.last_name) }).collect(),
+		authors: source.authors.iter().map(|a| a.to_string()).collect(),
 		date: source.date.clone(),
 		tags: source.tags.iter().map(|s| { s.tag.replace(" ", "_") }).collect()
 	};
@@ -65,10 +65,10 @@ pub fn write_source(target: SourceTarget) -> Result<(), SourceExportError> {
 	
 	SourceNote {
 		properties: &serde_yml::to_string(&props)?,
-		zotero: &source.select,
+		key: &source.key,
 		persist: &persist_sec,
 		title: &source.title,
-		content: &source.abstract_note
+		content: source.note.as_ref().map(|s| s.as_str())
 	}.write_to(file)?;
 
 	Ok(())
@@ -76,22 +76,24 @@ pub fn write_source(target: SourceTarget) -> Result<(), SourceExportError> {
 
 struct SourceNote<'a> {
 	properties: &'a str,
-	zotero: &'a str,
+	key: &'a str,
 	persist: &'a str,
 	title: &'a str,
-	content: &'a str
+	content: Option<&'a str>
 }
 
 impl<'a> SourceNote<'a> {
 	pub fn write_to(self, out: &mut File) -> Result<(), io::Error> {
 		let Self {
 			properties,
-			zotero,
+			key,
 			persist,
 			title,
 			content
 		} = self;
 
-		out.write_all(format!("---\n{properties}---\n\n[Open in Zotero]({zotero})\n\n**Persistent Notes**\n\n---\n\n<!--SZO-Persist-Begin-->{persist}%%SZO-Persist-End%%\n\n# {title}\n\n---\n\n{content}").as_bytes())
+		let content = content.unwrap_or_default();
+
+		out.write_all(format!("---\n{properties}---\n\n[Open in Zotero](zotero://select/library/items/{key})\n\n**Persistent Notes**\n\n---\n\n<!--SZO-Persist-Begin-->{persist}%%SZO-Persist-End%%\n\n# {title}\n\n---\n\n{content}").as_bytes())
 	}
 }

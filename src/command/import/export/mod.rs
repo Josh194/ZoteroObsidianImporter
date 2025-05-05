@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::document::annotation::Annotation;
+use crate::{document::annotation::Annotation, import::source::SourceImport};
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
@@ -14,5 +14,6 @@ pub struct ExportFile {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Export {
+	pub source: SourceImport,
 	pub annotations: Box<[Annotation]>
 }
