@@ -56,11 +56,14 @@ export class Source {
 		let parent = item.parentItem;
 		if (parent == undefined) { return null; }
 
+		let title: string = parent.getField("shortTitle");
+		if (title === "") { title = parent.getDisplayTitle(); }
+
 		return new Source(
 			parent.id,
 			parent.key,
 			parent.itemType,
-			parent.getDisplayTitle(),
+			title,
 			parent.getField("abstractNote"),
 			parent.getField("date"),
 			parent.getField("url"),

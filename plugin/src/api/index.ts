@@ -71,9 +71,12 @@ export class DocumentIndex extends IndexBase {
 	}
 
 	static try_from(item: Zotero.Item): DocumentIndex | null {
+		let title: string = item.getField("shortTitle");
+		if (title === "") { title = item.getDisplayTitle(); }
+
 		return new DocumentIndex(
 			item.id,
-			item.getDisplayTitle(),
+			title,
 			// Use the JSON variant since the underlying function is currently difficult to properly typecheck.
 			item.getCreatorsJSON().filter((c) => c.creatorType === "author").map(AuthorIndex.from),
 			item.getCollections(),

@@ -111,8 +111,6 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 	}
 
 	fn open_file<P: AsRef<Path>>(path: P) -> Result<fs::File, ProgramError> {
-		println!("Updating - {:?}", path.as_ref());
-
 		fs::File::options().read(true).write(true).open(path).map_err(|error| {
 			println!("Failed to open file!");
 			println!("Filesystem IO error: {error}"); ProgramError::FilesystemError
@@ -120,8 +118,6 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 	}
 
 	fn create_file<P: AsRef<Path>>(path: P) -> Result<fs::File, ProgramError> {
-		println!("Creating - {:?}", path.as_ref());
-
 		fs::File::create_new(path).map_err(|error| {
 			println!("Failed to create file!");
 			println!("Filesystem IO error: {error}"); ProgramError::FilesystemError
@@ -132,11 +128,30 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 		Ok(NoteTarget { file: if exists { open_file(path)? } else { create_file(path)? }, exists, persists: Vec::new() })
 	}
 
-	if verbose { println!("[DEBUG] - Current directory: {:?}\n\nBeginning import:", env::current_dir().unwrap()); }
+	if verbose { println!("[DEBUG] - Current directory: {}\n", env::current_dir().map(|p| p.to_string_lossy().into_owned()).unwrap_or("<UNKNOWN>".to_owned())); }
 
+	println!("{}: Beginning import", style("Info").bold());
+
+	fn log_note_output<P: AsRef<Path>>(path: P, exists: bool) {
+		let file_name = path.as_ref().file_name().unwrap();
+
+		if exists {
+			println!("{} - {}", style("U").bold().cyan(), file_name.to_string_lossy());
+		} else {
+			println!("{} - {}", style("C").bold().green(), file_name.to_string_lossy());
+		}
+	}
+
+	println!("{}:", style("Source").underlined());
+	log_note_output(&files.source.path, files.source.exists);
 	let mut source_target: NoteTarget = load_note(&files.source.path, files.source.exists)?;
+
+	println!("{}:", style("Annotations").underlined());
 	let annotation_targets: Vec<(Annotation, NoteTarget)> = files.annotations.map(|(z, file)| -> Result<_, ProgramError> {
-		Ok((z, load_note(&PathBuf::from(&workspace_path).join(ANNOTATIONS_PREFIX).join(file.path).with_extension("md"), file.exists)?))
+		let path = PathBuf::from(&workspace_path).join(ANNOTATIONS_PREFIX).join(file.path).with_extension("md");
+
+		log_note_output(&path, file.exists);
+		Ok((z, load_note(&path, file.exists)?))
 	}).collect::<Result<Vec<_>, _>>()?;
 
 	// * Write output notes.
