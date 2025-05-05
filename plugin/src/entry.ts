@@ -1,4 +1,5 @@
 import { Core } from './core'
+import { expand_plugin, remove_plugin_expansion } from './expand';
 import manifest from './manifest.json';
 
 const version = manifest.version;
@@ -6,6 +7,8 @@ const version = manifest.version;
 let core: Core | null;
 
 export function install() {
+	expand_plugin();
+
 	Zotero.log(`Installed ZOImporter ${version}`);
 }
 
@@ -40,5 +43,7 @@ export function shutdown() {
 }
 
 export function uninstall() {
+	remove_plugin_expansion();
+
 	Zotero.log(`Uninstalled ZOImporter ${version}`);
 }

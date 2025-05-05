@@ -46,8 +46,8 @@ export namespace Util {
 	export async function exec_importer(stage: ExecStage): Promise<true | Error> {
 		function get_stage_file(stage: ExecStage): string {
 			switch (stage) {
-				case "select": return "zo_select_run";
-				case "import": return "zo_import_run";
+				case "select": return "zo_select";
+				case "import": return "zo_import";
 			}
 		}
 
@@ -60,6 +60,10 @@ export namespace Util {
 		switch (get_os()) {
 			case OSType.Windows: {
 				file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${file_name}.bat`));
+				break;
+			}
+			case OSType.Mac: {
+				file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${file_name}.command`));
 				break;
 			}
 			default: {
@@ -76,7 +80,7 @@ export namespace Util {
 			}
 		}
 
-		return await Zotero.Utilities.Internal.exec(file, [dir.path, ])
+		return await Zotero.Utilities.Internal.exec(file, [dir.path])
 	}
 
 	export function require_defined<T>(val: T | null): T {
