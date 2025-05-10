@@ -3,8 +3,9 @@ use std::io;
 use chrono::format::StrftimeItems;
 use serde::Deserialize;
 
-use crate::api::shared::{Author, Name};
+use crate::{api::shared::{Author, Name}, util::human_date::{self, HumanDate}};
 
+// ! TODO: Sanity check this (eg for non emptiness) on import.
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -20,36 +21,23 @@ pub struct SourceImport {
 	pub tags: Vec<Tag>,
 	pub date_added: String,
 	pub date_modified: String,
-	pub path: String,
-	pub citation_key: String
+	pub path: String
 }
 
 #[allow(unused)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Tag {
-	pub tag: String
-}
-
-#[allow(unused)]
-pub struct MonthDate {
-	pub year: i32,
-	pub month: u8
+	pub name: String
 }
 
 impl SourceImport {
-	pub fn parse_date(&self) -> Result<MonthDate, chrono::ParseError> {
-		let mut parsed = chrono::format::Parsed::new();
-		
-		chrono::format::parse(&mut parsed, &self.date, StrftimeItems::new("%B %Y"))?;
-
-		Ok(MonthDate {
-			year: parsed.year().unwrap(),
-			month: parsed.month().unwrap() as u8,
-		})
+	// TODO: Handle errors.
+	pub fn parse_date(&self) -> Result<HumanDate, ()> {		
+		Ok(HumanDate::parse(&self.date).map_err(|_| ())?)
 	}
 
-	pub fn year(&self) -> i32 {
+	pub fn year(&self) -> u32 {
 		self.parse_date().unwrap().year
 	}
 
@@ -65,7 +53,7 @@ impl SourceImport {
 	}
 
 	pub fn file_name(&self) -> String {
-		self.citation_key.clone()
+		self.title.clone()
 	}
 }
 

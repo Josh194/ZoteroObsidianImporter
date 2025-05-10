@@ -33,7 +33,7 @@ export class LibraryIndex extends IndexBase {
 
 	static async from(library: Zotero.Library): Promise<LibraryIndex> {
 		let documents: DocumentIndex[] = (await Zotero.Items.getAll(library.id, true))
-			.filter((i) => i.itemType === "document") // ! TODO: This is wrong! Need to support other types, like "journalArticle", etc.
+			.filter((i) => i.isRegularItem()) // TODO: Check that 'regular' item is actually valid here.
 			.map(DocumentIndex.try_from)
 			.map(Util.require_defined);
 
@@ -132,7 +132,7 @@ export class CollectionIndex extends IndexBase {
 			collection.id,
 			collection.name,
 			collection.getChildCollections().map(CollectionIndex.from),
-			collection.getChildItems().filter((i) => i.itemType === "document").map((i) => i.id)
+			collection.getChildItems().filter((i) => i.isRegularItem()).map((i) => i.id)
 		);
 	}
 }

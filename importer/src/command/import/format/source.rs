@@ -58,7 +58,7 @@ pub fn write_source(target: SourceTarget) -> Result<(), SourceExportError> {
 	let props = SourceProperties {
 		authors: source.authors.iter().map(|a| a.to_string()).collect(),
 		date: source.date.clone(),
-		tags: source.tags.iter().map(|s| { s.tag.replace(" ", "_") }).collect()
+		tags: source.tags.iter().map(|s| { s.name.replace(" ", "_") }).collect()
 	};
 
 	let SourcePersist { content_section: persist_sec } = persist.unwrap_or_default();

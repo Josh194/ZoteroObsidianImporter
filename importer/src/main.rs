@@ -112,6 +112,7 @@ fn main() -> ProgramResult {
 fn run() -> Result<(), ProgramError> {
 	unsafe { env::set_var("RUST_BACKTRACE", "1") };
 
+	// ! TODO: This is checking the wrong thing; need to look at stdin, not any of the outputs.
 	if !console::user_attended_stderr() { return Err(ProgramError::Unattended); } // TODO: Just auto-fail prompts if unattended
 
 	// * Parse cli arguments.

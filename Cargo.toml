@@ -1,26 +1,17 @@
-[package]
-name = "ZOImporter"
-version = "0.1.0"
+[workspace]
+resolver = "3"
+members = ["importer", "shim/proxy", "shim/runner"]
+
+[workspace.package]
+authors = ["Josh Nave"]
+repository = "https://github.com/Josh194/ZoteroObsidianImporter"
+rust-version = "1.85.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
 # CLI
 clap = { version = "4.5.37", features = ["derive"] }
-console = "0.15.11"
-dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
+console = { version = "0.15.11" }
 
-# Time
-chrono = { version = "0.4.40", features = ["serde"] }
-
-# Byte Manipulation
-bytemuck = "1.22.0"
-zerocopy = { version = "0.8.25", features = ["alloc"] }
-
-# Serialization
-serde = { version = "1.0.219", features = ["derive"]}
-serde_path_to_error = "0.1.17"
-serde_json = "1.0.140"
-serde_yml = "0.0.12"
-
-# Utils
-itertools = "0.14.0"
+# IPC
+interprocess = { version = "2.2.3" }

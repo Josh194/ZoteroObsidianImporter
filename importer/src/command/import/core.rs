@@ -87,7 +87,7 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 	let import::Export { source, annotations } = export;
 
 	// TODO: Need to improve this.
-	let workspace_path: String = workspace_path.join(&source.citation_key).to_str().unwrap().to_owned();
+	let workspace_path: String = workspace_path.join(&source.title).to_str().unwrap().to_owned();
 
 	// * Determine current output directory contents, relative to the target output.
 	let files = match get_note_files(&workspace_path, &source.file_name(), annotations.into_iter(), |a| { format!("{} {}", source.short_name(), a.key) }) {

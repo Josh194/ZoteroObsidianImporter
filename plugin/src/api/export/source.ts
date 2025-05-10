@@ -15,7 +15,6 @@ export class Source {
 	date_added: string;
 	date_modified: string;
 	path: string;
-	citation_key: string;
 
 	constructor(
 		id: number,
@@ -29,8 +28,7 @@ export class Source {
 		tags: Tag[],
 		date_added: string,
 		date_modified: string,
-		path: string,
-		citation_key: string
+		path: string
 	) {
 		this.id = id;
 		this.key = key;
@@ -44,7 +42,6 @@ export class Source {
 		this.date_added = date_added;
 		this.date_modified = date_modified;
 		this.path = path;
-		this.citation_key = citation_key;
 	}
 
 	static try_from(item: Zotero.Item): Source | null {
@@ -59,6 +56,8 @@ export class Source {
 		let title: string = parent.getField("shortTitle");
 		if (title === "") { title = parent.getDisplayTitle(); }
 
+		// TODO: Check all fields for non-emptiness.
+
 		return new Source(
 			parent.id,
 			parent.key,
@@ -71,8 +70,7 @@ export class Source {
 			parent.getTags().map(Tag.from),
 			Zotero.Date.sqlToISO8601(parent.dateAdded),
 			Zotero.Date.sqlToISO8601(parent.dateModified),
-			path,
-			parent.getField("citationKey"),
+			path
 		);
 	}
 }

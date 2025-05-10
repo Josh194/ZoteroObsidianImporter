@@ -1,13 +1,12 @@
 {
 	"name": "zo-import-plugin",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"private": true,
 	"scripts": {
 		"build:dev": "webpack --config webpack.config.ts --mode=development && ts-node ./pack.ts",
 		"build:release": "webpack --config webpack.config.ts --mode=production && ts-node ./pack.ts"
 	},
 	"author": "Joshua Nave",
-	"license": "ISC",
 	"description": "",
 	"devDependencies": {
 		"typescript": "^5.8.2",

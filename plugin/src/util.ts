@@ -1,4 +1,4 @@
-import { export_name, index_name } from "./export";
+import { export_name, index_name, selection_name } from "./export";
 
 export namespace Util {
 	export async function get_data_dir(): Promise<nsIFile> {
@@ -44,26 +44,20 @@ export namespace Util {
 	type ExecStage = "select" | "import";
 
 	export async function exec_importer(stage: ExecStage): Promise<true | Error> {
-		function get_stage_file(stage: ExecStage): string {
-			switch (stage) {
-				case "select": return "zo_select";
-				case "import": return "zo_import";
-			}
-		}
-
-		const file_name: string = get_stage_file(stage);
-
+		const shim: string = "shim";
 		const dir: nsIFile = await get_data_dir();
 
 		let file: nsIFile;
 
+		let ext: string = "";
+
 		switch (get_os()) {
 			case OSType.Windows: {
-				file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${file_name}.bat`));
+				ext = ".exe";
 				break;
 			}
 			case OSType.Mac: {
-				file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${file_name}.command`));
+				ext = "";
 				break;
 			}
 			default: {
@@ -71,16 +65,19 @@ export namespace Util {
 			}
 		}
 
-		if (!file.exists() || !file.isExecutable()) { throw new ImporterNotFoundError("Importer not found"); }
+		file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${shim}${ext}`))
 
-		function get_args(stage: ExecStage): string[] {
+		if (!file.exists()) { throw new ImporterNotFoundError("Importer not found"); }
+		if (!file.isExecutable()) { throw new ImporterNotFoundError("Importer not executable"); }
+
+		function get_cmd(stage: ExecStage): string[] {
 			switch (stage) {
-				case "select": return [index_name];
-				case "import": return [export_name];
+				case "select": return ["select", "-f", index_name, "-o", selection_name];
+				case "import": return ["import", "-f", export_name];
 			}
 		}
 
-		return await Zotero.Utilities.Internal.exec(file, [dir.path])
+		return await Zotero.Utilities.Internal.exec(file, ["--working-directory", dir.path, "--command", `./ZOImporter${ext}`].concat(get_cmd(stage)));
 	}
 
 	export function require_defined<T>(val: T | null): T {
