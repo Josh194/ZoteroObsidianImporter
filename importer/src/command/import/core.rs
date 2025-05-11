@@ -2,7 +2,7 @@ use std::{env, fs::{self, File}, io::{self, Read, Seek}, path::{Path, PathBuf}};
 
 use console::style;
 
-use crate::{api::import::{self, annotation::Annotation}, util::versioned};
+use crate::{api::{import::{self, annotation::Annotation}, select::index}, core::{CollectionPath, LibraryCache}, util::versioned};
 use crate::{global::{ANNOTATIONS_PREFIX, API_VERSION}, ProgramConfig, ProgramError};
 use super::format::{annotation::{write_annotation, AnnnotationPersist, AnnotationExportError, AnnotationImportData, AnnotationTarget}, source::{write_source, SourceExportError, SourceImportData, SourcePersist, SourceTarget}, target::NTarget};
 use super::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_persistent_sections, FetchPersistentError}};
@@ -11,6 +11,9 @@ use super::scan::{notes::{get_note_files, NoteFetchError}, persistent::{get_pers
 pub struct ImportArgs {
 	#[arg(short, long)]
 	file: PathBuf,
+
+	#[arg(short, long)]
+	index: PathBuf
 }
 
 #[derive(Debug)]
@@ -82,12 +85,39 @@ pub fn import(config: &ProgramConfig, verbose: bool, args: ImportArgs) -> Result
 		}
 	})?;
 
+	// TODO: Deduplicate index handling code.
+	// ==================
+	let index_file: String = fs::read_to_string(args.index).unwrap();
+
+	let index: index::User = versioned::deserialize_json_str_track(API_VERSION, &index_file).map_err(|e| {
+		match e {
+			versioned::Error::InvalidVersion(version) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Unsupported API version").bold());
+				eprintln!("{}: The index file uses version '{version}', but only '{API_VERSION}' is supported", style("Info").bold());
+			},
+			versioned::Error::Inner(e) => {
+				eprintln!("{}: {}", style("Error").bold().red(), style("Invalid API query").bold());
+				eprintln!("{}: {e}", style("Info").bold());
+			},
+		}
+		
+		ProgramError::BadIndexFormat
+	})?;
+
+	let library: &index::Library = index.libraries.iter().find(|lib| lib.id == export.source.library as i64).ok_or(ProgramError::BadIndexFormat)?;
+
+	let cache: LibraryCache = LibraryCache::new(library).map_err(|_| ProgramError::BadIndexFormat)?;
+
+	let document = library.documents.iter().find(|doc| doc.id == export.source.id as i64).ok_or(ProgramError::BadIndexFormat)?;
+	let collection_path: CollectionPath = cache.get_collection(*document.collection_ids.get(0).ok_or(ProgramError::BadImportFormat)?).ok_or(ProgramError::BadImportFormat)?.get_path();
+	// ==================
+
 	// * Load export file.
 	// TODO: Could be multiple attachments.
 	let import::Export { source, annotations } = export;
 
 	// TODO: Need to improve this.
-	let workspace_path: String = workspace_path.join(&source.title).to_str().unwrap().to_owned();
+	let workspace_path: String = workspace_path.join(TryInto::<PathBuf>::try_into(collection_path).map_err(|_| ProgramError::BadImportFormat)?).join(&source.title).to_str().unwrap().to_owned();
 
 	// * Determine current output directory contents, relative to the target output.
 	let files = match get_note_files(&workspace_path, &source.file_name(), annotations.into_iter(), |a| { format!("{} {}", source.short_name(), a.key) }) {

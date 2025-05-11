@@ -39,6 +39,7 @@ enum ProgramError {
 	UnsupportedConfigVersion,
 	UnsupportedAPIVersion,
 	BadImportFormat,
+	BadIndexFormat,
 	AnnotationParseError,
 	FilesystemError,
 	InteractError,

@@ -3,6 +3,7 @@ import { Util } from "../../util";
 import { Tag } from "./annotations";
 
 export class Source {
+	library: number;
 	id: number;
 	key: string;
 	kind: string;
@@ -17,6 +18,7 @@ export class Source {
 	path: string;
 
 	constructor(
+		library: number,
 		id: number,
 		key: string,
 		kind: string,
@@ -30,6 +32,7 @@ export class Source {
 		date_modified: string,
 		path: string
 	) {
+		this.library = library;
 		this.id = id;
 		this.key = key;
 		this.kind = kind;
@@ -59,6 +62,7 @@ export class Source {
 		// TODO: Check all fields for non-emptiness.
 
 		return new Source(
+			parent.libraryID,
 			parent.id,
 			parent.key,
 			parent.itemType,

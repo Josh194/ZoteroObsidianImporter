@@ -10,6 +10,7 @@ use crate::{api::shared::{Author, Name}, util::human_date::{self, HumanDate}};
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceImport {
+	pub library: i32,
 	pub id: i32,
 	pub key: String,
 	pub kind: String,

@@ -73,7 +73,7 @@ export namespace Util {
 		function get_cmd(stage: ExecStage): string[] {
 			switch (stage) {
 				case "select": return ["select", "-f", index_name, "-o", selection_name];
-				case "import": return ["import", "-f", export_name];
+				case "import": return ["import", "-f", export_name, "-i", index_name];
 			}
 		}
 
