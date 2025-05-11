@@ -10,6 +10,9 @@ edition.workspace = true
 # API
 shim-api = { path = "../ipc" }
 
+# Logging
+log = { path = "../../log" }
+
 # CLI
 clap.workspace = true
 

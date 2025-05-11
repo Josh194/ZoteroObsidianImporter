@@ -35,6 +35,10 @@ struct Cli {
 fn main() -> Result<(), ErrorReason> {
 	let cli: Cli = Cli::parse();
 
+	if let Ok(path) = env::current_exe() {
+		log::set_config(path.with_file_name("proxy.log"), false);
+	}
+
 	if let Some(path) = &cli.working_directory {
 		env::set_current_dir(path).map_err(|_| ErrorReason::NavigateFailure)?;
 	}

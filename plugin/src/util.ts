@@ -77,7 +77,7 @@ export namespace Util {
 			}
 		}
 
-		return await Zotero.Utilities.Internal.exec(file, ["--working-directory", dir.path, "--command", `./ZOImporter${ext}`].concat(get_cmd(stage)));
+		return await Zotero.Utilities.Internal.exec(file, ["--verbose", "--log", "--working-directory", dir.path, "--command", `./ZOImporter${ext}`].concat(get_cmd(stage)));
 	}
 
 	export function require_defined<T>(val: T | null): T {

@@ -1,7 +1,8 @@
-use std::{env, fmt::Display, io::{BufReader, Read}, path::PathBuf, process::{self, Child, Command, ExitStatus, Stdio}};
+use std::{env, io::{BufReader, Read}, path::{Path, PathBuf}, process::{self, Child, Command, ExitStatus, Stdio}};
 
 use clap::Parser as _;
 use interprocess::local_socket::{traits::Listener as _, GenericNamespaced, Listener, ListenerOptions, ToNsName};
+use log::prelude::*;
 
 // ! TODO: Replace named pipes with a less fragile alternative.
 
@@ -26,6 +27,10 @@ struct Cli {
 	#[arg(long)]
 	pub working_directory: Option<PathBuf>,
 
+	// TODO: Implement functionality here.
+	#[arg(long)]
+	pub log: bool,
+
 	#[arg(long)] // Don't conflict with version.
 	pub verbose: bool,
 
@@ -33,29 +38,32 @@ struct Cli {
     command: Vec<String>
 }
 
-fn report_error<E: Display>(cli: &Cli, error: &E) {
-	if cli.verbose { eprintln!("Error: {error}"); }
-}
-
 fn main() -> Result<(), ErrorReason> {
 	let cli: Cli = Cli::parse();
 
+	if let Ok(path) = env::current_exe() {
+		log::set_config(path.with_file_name("shim.log"), cli.verbose);
+	}
+
 	if let Some(path) = &cli.working_directory {
-		env::set_current_dir(path).map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::NavigateFailure })?;
+		env::set_current_dir(path).map_err(|e| -> ErrorReason { elogln!("Error: Failed to navigate to working directory\n    {e}"); ErrorReason::NavigateFailure })?;
 	}
 
 	let server: Listener = ListenerOptions::new()
 		.name(SERVER_NAME.to_ns_name::<GenericNamespaced>()
-			.map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::UnsupportedPipeName })?)
+			.map_err(|e| -> ErrorReason { elogln!("Error: Pipe name is unsupported\n    {e}"); ErrorReason::UnsupportedPipeName })?)
 		.create_sync()
-		.map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::IPCInitFailure })?;
+		.map_err(|e| -> ErrorReason { elogln!("Error: Failed to initialize IPC\n    {e}"); ErrorReason::IPCInitFailure })?;
 
 	let id: u32 = process::id();
 
 	let mut child: Child = {
 		let mut command = Command::new("alacritty");
 
-		command.args(["--command", "./proxy", "--wait", "--id", &id.to_string(), "--server", SERVER_NAME]);
+		// Mac fails to find the proxy executable if we do not give an absolute path.
+		command
+			.arg("--command").arg(cli.working_directory.as_ref().map(|p| p.join("./proxy")).unwrap_or(Path::new("./proxy").to_owned()))
+			.args(["--wait", "--id", &id.to_string(), "--server", SERVER_NAME]);
 
 		if let Some(path) = &cli.working_directory {
 			command.arg("--working-directory").arg(path.as_os_str());
@@ -63,11 +71,9 @@ fn main() -> Result<(), ErrorReason> {
 
 		command
 			.arg("--command").args(&cli.command)
-			.stdin(Stdio::null())
-			.stdout(Stdio::null())
-			.stderr(Stdio::null());
+			.stdin(Stdio::null());
 
-		command.spawn().map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::ChildInitFailure })?
+		command.spawn().map_err(|e| -> ErrorReason { elogln!("Error: Failed to initialize child\n    {e}"); ErrorReason::ChildInitFailure })?
 	};
 
 	// TODO: Consider erroring on unexpected client failures to avoid the risk of deadlocking due to bugs.
@@ -78,24 +84,24 @@ fn main() -> Result<(), ErrorReason> {
 
 				let mut buffer: Vec<u8> = Vec::new();
 				// TODO: Protect again client crashes potentially deadlocking us here.
-				reader.read_to_end(&mut buffer).map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::StreamFailure })?;
+				reader.read_to_end(&mut buffer).map_err(|e| -> ErrorReason { elogln!("Error: Failed to read from steam\n    {e}"); ErrorReason::StreamFailure })?;
 
 				match shim_api::Msg::deserialize(&buffer) {
 					Ok(msg) => {
-						if msg.id != id { if cli.verbose { eprintln!("Warning: Received a message from an unknown client\n    ({} != {})", msg.id, id); } continue;}
+						if msg.id != id { if cli.verbose { elogln!("Warning: Received a message from an unknown client\n    ({} != {})", msg.id, id); } continue;}
 
 						break (msg.code, msg.success);
 					},
-					Err(e) => eprintln!("Warning: Received an invalid client message\n    {e:?}"),
+					Err(e) => elogln!("Warning: Received an invalid client message\n    {e:?}"),
 				}
 			},
-			Err(e) => eprintln!("Warning: Failed to open a received client connection\n    {e}"),
+			Err(e) => elogln!("Warning: Failed to open a received client connection\n    {e}"),
 		}
 	};
 
-	let status: ExitStatus = child.wait().map_err(|e| -> ErrorReason { report_error(&cli, &e); ErrorReason::ChildWaitFailure })?;
+	let status: ExitStatus = child.wait().map_err(|e| -> ErrorReason { elogln!("Error: Child wait failed\n    {e}"); ErrorReason::ChildWaitFailure })?;
 
-	if !status.success() { if cli.verbose { eprintln!("Error: Terminal failed"); } return Err(ErrorReason::TerminalFailure); }
+	if !status.success() { if cli.verbose { elogln!("Error: Terminal failed"); } return Err(ErrorReason::TerminalFailure); }
 
 	if success { Ok(()) } else { Err(ErrorReason::ChildError) }
 }

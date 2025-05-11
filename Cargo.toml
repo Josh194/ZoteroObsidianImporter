@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["importer", "shim/proxy", "shim/runner"]
+members = ["importer", "log", "shim/proxy", "shim/runner"]
 
 [workspace.package]
 authors = ["Josh Nave"]

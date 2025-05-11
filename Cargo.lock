@@ -306,7 +306,7 @@ dependencies = [
  "core-foundation-sys",
  "iana-time-zone-haiku",
  "js-sys",
- "log",
+ "log 0.4.27",
  "wasm-bindgen",
  "windows-core",
 ]
@@ -398,6 +398,13 @@ checksum = "cd945864f07fe9f5371a27ad7b52a172b4b499999f1d97574c9fa68373937e12"
 
 [[package]]
 name = "log"
+version = "0.1.0"
+dependencies = [
+ "console",
+]
+
+[[package]]
+name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
@@ -439,6 +446,7 @@ dependencies = [
  "clap",
  "console",
  "interprocess",
+ "log 0.1.0",
  "shim-api",
 ]
 
@@ -557,6 +565,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "interprocess",
+ "log 0.1.0",
  "shim-api",
 ]
 
@@ -685,7 +694,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f0a0651a5c2bc21487bde11ee802ccaf4c51935d0d3d42a6101f98161700bc6"
 dependencies = [
  "bumpalo",
- "log",
+ "log 0.4.27",
  "proc-macro2",
  "quote",
  "syn",
