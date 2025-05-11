@@ -1,13 +1,15 @@
 import * as fs from 'fs';
 import type { Archiver } from 'archiver';
 import archiver from 'archiver';
+import path from 'path';
 
 pack();
 
 function pack() {
 	console.log("Beginning artifact pack");
 
-	const output = fs.createWriteStream(__dirname + '/install/zo-importer.xpi');
+	fs.mkdirSync(path.resolve(__dirname, './install'), { recursive: false });
+	const output = fs.createWriteStream(path.resolve(__dirname, './install/zo-importer.xpi'));
 
 	const archive: Archiver = archiver('zip', {
 		zlib: { level: 9 }
