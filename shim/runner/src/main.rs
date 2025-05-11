@@ -1,7 +1,7 @@
-use std::{env, io::{BufReader, Read}, path::{Path, PathBuf}, process::{self, Child, Command, ExitStatus, Stdio}};
+use std::{env, fs, io::{BufReader, Read}, path::{Path, PathBuf}, process::{self, Child, Command, ExitStatus, Stdio}};
 
 use clap::Parser as _;
-use interprocess::local_socket::{traits::Listener as _, GenericNamespaced, Listener, ListenerOptions, ToNsName};
+use interprocess::local_socket::{traits::Listener as _, GenericFilePath, GenericNamespaced, Listener, ListenerOptions, Name, ToFsName, ToNsName};
 use log::prelude::*;
 
 // ! TODO: Replace named pipes with a less fragile alternative.
@@ -38,6 +38,26 @@ struct Cli {
     command: Vec<String>
 }
 
+// * Mac fails to find any of the executables if we do not give an absolute path, hence the the need for this.
+// * Additionally Zotero does not seem to properly pass in the system environment variables on Mac, so this is needed even for executables on the path.
+fn resolve_path<P: AsRef<Path>>(path: P) -> PathBuf {
+	env::current_dir().unwrap_or_default().join(path)
+}
+
+fn find_terminal() -> PathBuf {
+	if cfg!(windows) {
+		Path::new("alacritty").to_owned()
+	} else {
+		resolve_path("alacritty")
+	}
+}
+
+// * Required because interprocess currently fails to cleanup properly on some platforms (is the name not being dropped somehow?).
+// TODO: This is concerningly fragile (no guarantee we are removing the correct path).
+fn reclaim_ipc<P: AsRef<Path>>(path: P) {
+	let _ = fs::remove_file(path);
+}
+
 fn main() -> Result<(), ErrorReason> {
 	let cli: Cli = Cli::parse();
 
@@ -49,20 +69,27 @@ fn main() -> Result<(), ErrorReason> {
 		env::set_current_dir(path).map_err(|e| -> ErrorReason { elogln!("Error: Failed to navigate to working directory\n    {e}"); ErrorReason::NavigateFailure })?;
 	}
 
+	let ipc_name: Name = if cfg!(unix) {
+		let path = Path::new("/tmp").join(SERVER_NAME);
+		reclaim_ipc(&path);
+
+		path.to_fs_name::<GenericFilePath>()
+	} else {
+		SERVER_NAME.to_ns_name::<GenericNamespaced>()
+	}.map_err(|e| -> ErrorReason { elogln!("Error: Pipe name is unsupported\n    {e}"); ErrorReason::UnsupportedPipeName })?;
+
 	let server: Listener = ListenerOptions::new()
-		.name(SERVER_NAME.to_ns_name::<GenericNamespaced>()
-			.map_err(|e| -> ErrorReason { elogln!("Error: Pipe name is unsupported\n    {e}"); ErrorReason::UnsupportedPipeName })?)
+		.name(ipc_name)
 		.create_sync()
 		.map_err(|e| -> ErrorReason { elogln!("Error: Failed to initialize IPC\n    {e}"); ErrorReason::IPCInitFailure })?;
 
 	let id: u32 = process::id();
 
 	let mut child: Child = {
-		let mut command = Command::new("alacritty");
+		let mut command = Command::new(find_terminal());
 
-		// Mac fails to find the proxy executable if we do not give an absolute path.
 		command
-			.arg("--command").arg(cli.working_directory.as_ref().map(|p| p.join("./proxy")).unwrap_or(Path::new("./proxy").to_owned()))
+			.arg("--command").arg(resolve_path("proxy"))
 			.args(["--wait", "--id", &id.to_string(), "--server", SERVER_NAME]);
 
 		if let Some(path) = &cli.working_directory {
