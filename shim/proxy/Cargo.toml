@@ -1,0 +1,21 @@
+[package]
+name = "proxy"
+version = "0.1.0"
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+# API
+shim-api = { path = "../ipc" }
+
+# Logging
+log = { path = "../../log" }
+
+# CLI
+clap.workspace = true
+console.workspace = true
+
+# IPC
+interprocess.workspace = true

@@ -1,0 +1,26 @@
+{
+	"extends": "../configs/base/tsconfig",
+	"compilerOptions": {
+		"composite": true,
+		"experimentalDecorators": true, // Used by zotero-types
+		// target/environment settings
+		"module": "ES2022",
+		"target": "ES2022",
+		"lib": ["ESNext"],
+		"moduleResolution": "bundler",
+		"outDir": "../out",
+		// generation settings
+		"removeComments": false,
+		"preserveConstEnums": true,
+		"sourceMap": true,
+		// paths
+		"paths": {},
+		// types
+		// ! Unfortunately, zotero-types runs into https://github.com/microsoft/TypeScript/issues/33111, but I don't see an easy solution right now.
+		"types": ["zotero-types/entries/sandbox"] // Must exist to prevent dev dependencies from being pulled in.
+	},
+	"include": [
+		"./**/*",
+		"./manifest.json"
+	]
+}

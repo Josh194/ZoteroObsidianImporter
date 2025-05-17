@@ -1,0 +1,16 @@
+{
+	"extends": "./configs/base/tsconfig",
+	"compilerOptions": {
+		"module": "ES2022",
+		"moduleResolution": "node10",
+		"target": "ES2022",
+		"esModuleInterop": true,
+		"noEmit": true
+	},
+	"files": [
+		"./webpack.config.mts"
+	],
+	"include": [
+		"./build/**/*"
+	]
+}

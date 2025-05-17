@@ -1,0 +1,14 @@
+[package]
+name = "log"
+version = "0.1.0"
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+# CLI
+console.workspace = true

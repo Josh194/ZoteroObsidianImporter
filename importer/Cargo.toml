@@ -1,0 +1,29 @@
+[package]
+name = "ZOImporter"
+version = "0.1.0"
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+
+[dependencies]
+# CLI
+clap.workspace = true
+console.workspace = true
+dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
+
+# Time
+chrono = { version = "0.4.40", features = ["serde"] }
+
+# Byte Manipulation
+bytemuck = "1.22.0"
+zerocopy = { version = "0.8.25", features = ["alloc"] }
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"]}
+serde_path_to_error = "0.1.17"
+serde_json = "1.0.140"
+serde_yml = "0.0.12"
+
+# Utils
+itertools = "0.14.0"

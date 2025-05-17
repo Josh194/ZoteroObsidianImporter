@@ -1,0 +1,29 @@
+{
+	"name": "zo-import-plugin",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"build:dev": "node --import ./register-hooks.mjs node_modules/webpack/bin/webpack --progress --config ./webpack.config.mts --mode=development",
+		"build:release": "node --import ./register-hooks.mjs node_modules/webpack/bin/webpack --config ./webpack.config.mts --mode=production",
+		"test": ""
+	},
+	"author": "Joshua Nave",
+	"description": "",
+	"type": "module",
+	"devDependencies": {
+		"@stylistic/eslint-plugin": "^4.2.0",
+		"@types/archiver": "^6.0.3",
+		"@types/node": "^22.13.9",
+		"@types/webpack": "^5.28.5",
+		"@typescript-eslint/parser": "^8.32.0",
+		"archiver": "^7.0.1",
+		"eslint": "^9.26.0",
+		"eslint-webpack-plugin": "git://github.com/webpack-contrib/eslint-webpack-plugin.git#32f05c6fdd70ec5532682ce5ed134998a269cdf3",
+		"ts-loader": "^9.5.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.8.2",
+		"webpack": "^5.99.7",
+		"webpack-cli": "^6.0.1",
+		"zotero-types": "^4.0.0-beta.10"
+	}
+}
