@@ -4,7 +4,8 @@
 	"private": true,
 	"scripts": {
 		"build:dev": "node --import ./register-hooks.mjs node_modules/webpack/bin/webpack --progress --config ./webpack.config.mts --mode=development",
-		"build:release": "node --import ./register-hooks.mjs node_modules/webpack/bin/webpack --config ./webpack.config.mts --mode=production"
+		"build:release": "node --import ./register-hooks.mjs node_modules/webpack/bin/webpack --config ./webpack.config.mts --mode=production",
+		"test": ""
 	},
 	"author": "Joshua Nave",
 	"description": "",
