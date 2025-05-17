@@ -31,10 +31,10 @@ jobs:
       uses: "actions/cache@v4"
       with:
         path: |
-          "~/.cargo/registry"
-          "~/.cargo/git"
-          "target"
-        key: "${{ runner.os }}-${{ matrix.profile.type }}-cargo-${{ hashFiles('Cargo.lock') }}"
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: "${{ runner.os }}-${{ matrix.profile.type }}-cargo-${{ hashFiles('Cargo.toml', 'Cargo.lock') }}"
   
     - name: "Build"
       run: "cargo build --profile ${{ matrix.profile.type }} --verbose"
@@ -46,7 +46,11 @@ jobs:
       uses: "actions/upload-artifact@v4"
       with:
         name: "Importer-${{ matrix.target.runner }}-${{ matrix.profile.type }}"
-        path: "target/${{ matrix.profile.dir }}/*${{ matrix.target.ext }}"
+        # Globbing fails here, so just specify all files manually.
+        path: |
+          target/${{ matrix.profile.dir }}/ZOImporter${{ matrix.target.ext }}
+          target/${{ matrix.profile.dir }}/shim${{ matrix.target.ext }}
+          target/${{ matrix.profile.dir }}/proxy${{ matrix.target.ext }}
         if-no-files-found: "error"
 
   plugin:
@@ -84,5 +88,5 @@ jobs:
       uses: "actions/upload-artifact@v4"
       with:
         name: "Plugin"
-        path: "plugin/dist/zo_importer.xpi"
+        path: plugin/dist/zo_importer.xpi
         if-no-files-found: "error"
