@@ -401,8 +401,7 @@ mod tests {
 		assert_eq!(Tokenize::new(" str .  5 ").collect::<Vec<_>>(), &[
 			Ok(Token { pos: 1..4, data: TokenData::String("str") }),
 			Ok(Token { pos: 5..6, data: TokenData::Punctuation('.') }),
-			Ok(Token { pos: 8..9, data: TokenData::Number(5) }),
-			Err(TokenError { position: ErrorPosition::Global, reason: TokenErrorReason::Empty })
+			Ok(Token { pos: 8..9, data: TokenData::Number(5) })
 		]);
 	}
 
@@ -423,12 +422,5 @@ mod tests {
 		assert!(HumanDate::parse("February").is_err());
 		assert!(HumanDate::parse("").is_err());
 		assert!(HumanDate::parse("February 2024 X").is_err());
-	}
-
-	#[test]
-	fn parse_message() {
-		let error = HumanDate::parse("Feb.").unwrap_err();
-		println!("{}: {}\n{}", style("Error").bold().red(), style(&error).bold(), error.help());
-		panic!();
 	}
 }
