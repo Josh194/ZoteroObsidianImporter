@@ -3,7 +3,7 @@ import { export_name, index_name, selection_name } from "./export";
 export namespace Util {
 	export async function get_data_dir(): Promise<nsIFile> {
 		let dir: string = PathUtils.join(Zotero.DataDirectory.dir, "zo_import");
-		
+
 		await Zotero.File.createDirectoryIfMissingAsync(dir);
 
 		return Zotero.File.pathToFile(dir);
@@ -65,7 +65,7 @@ export namespace Util {
 			}
 		}
 
-		file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${shim}${ext}`))
+		file = Zotero.File.pathToFile(PathUtils.join(dir.path, `${shim}${ext}`));
 
 		if (!file.exists()) { throw new ImporterNotFoundError("Importer not found"); }
 		if (!file.isExecutable()) { throw new ImporterNotFoundError("Importer not executable"); }

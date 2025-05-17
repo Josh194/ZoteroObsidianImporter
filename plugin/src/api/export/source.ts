@@ -37,9 +37,9 @@ export class Source {
 		this.key = key;
 		this.kind = kind;
 		this.title = title;
-		if (note !== null) { this.note = note };
+		if (note !== null) { this.note = note; };
 		this.date = date;
-		if (url !== null) { this.url = url };
+		if (url !== null) { this.url = url; };
 		this.authors = authors;
 		this.tags = tags;
 		this.date_added = date_added;

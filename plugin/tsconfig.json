@@ -1,12 +1,16 @@
 {
+	"extends": "./configs/base/tsconfig",
 	"compilerOptions": {
-		"module": "CommonJS",
-		"target": "ES5",
-		"allowSyntheticDefaultImports": true,
+		"module": "ES2022",
+		"moduleResolution": "node10",
+		"target": "ES2022",
 		"esModuleInterop": true,
-		"noImplicitAny": true,
+		"noEmit": true
 	},
 	"files": [
-		"./webpack.config.ts"
+		"./webpack.config.mts"
+	],
+	"include": [
+		"./build/**/*"
 	]
 }

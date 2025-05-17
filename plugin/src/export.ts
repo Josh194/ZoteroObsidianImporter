@@ -84,7 +84,7 @@ export async function perform_export(): Promise<true | Error> {
 	));
 
 	let result = await Util.exec_importer("import");
-	
+
 	Zotero.log("ZO export complete");
 	return result;
 }

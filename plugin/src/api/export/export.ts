@@ -30,14 +30,14 @@ export class ZExport {
 
 		let source: Source | null = Source.try_from(item);
 		if (source == null) { return null; }
-		
+
 		let annotations: Annotation[] = item.getAnnotations()
 			.map(Annotation.try_from)
 			.map(Util.require_defined);
-		
+
 		return new ZExport(
 			source,
 			annotations
-		);	
+		);
 	}
 }

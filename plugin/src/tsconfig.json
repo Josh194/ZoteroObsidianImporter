@@ -1,4 +1,5 @@
 {
+	"extends": "../configs/base/tsconfig",
 	"compilerOptions": {
 		"composite": true,
 		"experimentalDecorators": true, // Used by zotero-types
@@ -7,18 +8,7 @@
 		"target": "ES2022",
 		"lib": ["ESNext"],
 		"moduleResolution": "bundler",
-		"outDir": "../dist", // Should not be required; why is this happening?
-		// type settings
-		"strict": true,
-		"exactOptionalPropertyTypes": true,
-		"noFallthroughCasesInSwitch": true,
-		"noImplicitOverride": true,
-		"noImplicitReturns": true,
-		"noPropertyAccessFromIndexSignature": true,
-		"noUncheckedIndexedAccess": true,
-		// module settings
-		"noUncheckedSideEffectImports": true,
-		"resolveJsonModule": true,
+		"outDir": "../out",
 		// generation settings
 		"removeComments": false,
 		"preserveConstEnums": true,

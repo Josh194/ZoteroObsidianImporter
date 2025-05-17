@@ -1,6 +1,6 @@
-import { Core } from './core'
-import { expand_plugin, remove_plugin_expansion } from './expand';
-import manifest from './manifest.json';
+import { Core } from "./core";
+import { expand_plugin, remove_plugin_expansion } from "./expand";
+import manifest from "./manifest.json";
 
 const version = manifest.version;
 
@@ -12,13 +12,13 @@ export function install() {
 	Zotero.log(`Installed ZOImporter ${version}`);
 }
 
-export async function startup({ id, version, rootURI }: {id: any, version: any, rootURI: any}) {
+export async function startup({ id, version, rootURI }: { id: any, version: any, rootURI: any }) {
 	Zotero.log(`Starting ZOImporter ${version}`);
-	
+
 	Zotero.PreferencePanes.register({
 		pluginID: manifest.applications.zotero.id,
-		src: rootURI + 'preferences.xhtml', // ? What is this?
-		scripts: [rootURI + 'preferences.js'] // ? What is this?
+		src: rootURI + "preferences.xhtml", // ? What is this?
+		scripts: [rootURI + "preferences.js"] // ? What is this?
 	});
 
 	core = new Core(id, version, rootURI);
@@ -27,11 +27,11 @@ export async function startup({ id, version, rootURI }: {id: any, version: any, 
 	core.addImportMenu();
 }
 
-export function onMainWindowLoad({ window }: {window: any}) {
+export function onMainWindowLoad({ window }: { window: any }) {
 	core?.addToWindow(window);
 }
 
-export function onMainWindowUnload({ window }: {window: any}) {
+export function onMainWindowUnload({ window }: { window: any }) {
 	core?.removeFromWindow(window);
 }
 

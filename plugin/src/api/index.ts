@@ -102,7 +102,7 @@ export class AuthorIndex {
 		if (creator.name === undefined) {
 			format = "full";
 			if (creator.firstName === undefined || creator.lastName === undefined ) { throw new TypeError("Invalid creator JSON!"); }
-			name = { first: creator.firstName, last: creator.lastName } ;
+			name = { first: creator.firstName, last: creator.lastName };
 		} else {
 			format = "combined";
 			name = creator.name;

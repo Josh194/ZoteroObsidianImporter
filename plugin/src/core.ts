@@ -1,13 +1,13 @@
 import { perform_export } from "./export";
 import { Util } from "./util";
-import manifest from './manifest.json';
+import manifest from "./manifest.json";
 
 export class Core {
 	id: null;
 	version: null;
 	rootURI: null;
 	// children: string[]
-	
+
 	constructor(id: null, version: null, rootURI: null ) {
 		this.id = id;
 		this.version = version;
@@ -27,7 +27,7 @@ export class Core {
 
 					async onCommand() {
 						await clickHandler();
-					},
+					}
 				});
 			},
 			manifest.applications.zotero.id
@@ -38,19 +38,19 @@ export class Core {
 
 	addToAllWindows() {
 		var windows = Zotero.getMainWindows();
-		
+
 		for (let win of windows) {
 			if (!win.ZoteroPane) continue;
-			
+
 			this.addToWindow(win);
 		}
 	}
-	
+
 	removeFromWindow(window: _ZoteroTypes.MainWindow) {}
 
 	removeFromAllWindows() {
 		var windows = Zotero.getMainWindows();
-		
+
 		for (let win of windows) {
 			if (!win.ZoteroPane) continue;
 
@@ -63,7 +63,7 @@ async function clickHandler(): Promise<void> {
 	Zotero.log("clicked");
 
 	try {
-		let result = await perform_export()
+		let result = await perform_export();
 
 		if (result !== true) {
 			Zotero.log("Export failed");

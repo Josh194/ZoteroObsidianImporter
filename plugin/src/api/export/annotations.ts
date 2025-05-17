@@ -25,8 +25,8 @@ export class Annotation {
 		this.key = key;
 		this.kind = kind;
 		this.page = page;
-		if (text !== null) { this.text = text };
-		if (comment !== null) { this.comment = comment };
+		if (text !== null) { this.text = text; };
+		if (comment !== null) { this.comment = comment; };
 		this.colour = colour;
 		this.date_added = date_added;
 		this.date_modified = date_modified;
